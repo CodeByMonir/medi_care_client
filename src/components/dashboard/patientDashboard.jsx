@@ -15,7 +15,7 @@ import {
     FaStethoscope
 } from "react-icons/fa";
 
-export default function DashboardSidebar({ onLogout }) {
+export default function PatientDashboard({ onLogout }) {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -36,7 +36,7 @@ export default function DashboardSidebar({ onLogout }) {
         <>
             {/* MOBILE FLOATING TRIGGER TOP NAVBAR */}
             <div className="md:hidden flex items-center justify-between h-10 bg-white dark:bg-slate-900 dark:border-slate-800 sticky top-0 z-40 rounded-2xl">
-                
+
                 <button
                     onClick={toggleMobileMenu}
                     className="px-3 text-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
@@ -84,8 +84,8 @@ export default function DashboardSidebar({ onLogout }) {
                                     href={item.href}
                                     onClick={() => setIsMobileMenuOpen(false)} // Close drawer on navigation selection
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
-                                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
+                                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
+                                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
                                         }`}
                                 >
                                     <span className={`text-base transition-transform duration-200 ${isActive ? "scale-110" : ""}`}>
