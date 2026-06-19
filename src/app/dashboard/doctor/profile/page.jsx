@@ -11,7 +11,9 @@ import {
     FaCamera,
     FaClock,
     FaSpinner,
-    FaLock
+    FaLock,
+    FaCheckCircle,
+    FaHourglassHalf
 } from "react-icons/fa";
 
 export default function DoctorProfilePage() {
@@ -21,40 +23,44 @@ export default function DoctorProfilePage() {
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
 
+    // Profile state mapped to your precise schema keys
     const [profile, setProfile] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
+        name: "",
+        email: "", // Used to sync from session, can be managed alongside practitioner files
         phone: "+1 (555) 234-5678",
-        specialty: "Cardiology",
-        biography: "Dr. Alexander Callaway is a board-certified cardiologist with over 12 years of experience specializing in non-invasive cardiology, heart failure management, and cardiovascular imaging.",
-        licenseNumber: "MD-98765432-NY",
-        hospitalAffiliation: "Metro Health Medical Center",
-        consultationFee: "150"
+        specialization: "Cardiology",
+        qualifications: "MD, FACC, Board Certified in Cardiovascular Disease",
+        experience: "12",
+        biography: "Dr. Alexander Callaway is a board-certified cardiologist specializing in non-invasive cardiology, heart failure management, and cardiovascular imaging.",
+        consultationFee: "150",
+        hospitalName: "Metro Health Medical Center",
+        profileImage: ""
     });
+
+    // Mock structure for active operating parameters
+    const [availableDays] = useState(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
+    const [availableSlots] = useState([
+        { day: "Monday", hours: "09:00 AM - 05:00 PM" },
+        { day: "Tuesday", hours: "09:00 AM - 05:00 PM" },
+        { day: "Wednesday", hours: "09:00 AM - 01:00 PM" },
+        { day: "Thursday", hours: "09:00 AM - 05:00 PM" },
+        { day: "Friday", hours: "09:00 AM - 04:00 PM" }
+    ]);
+
+    // Extracting status directly from session metadata (fallback to pending if undefined)
+    const verificationStatus = session?.user?.verificationStatus || "pending";
 
     // 2. Sync profile fields when session finishes resolving
     useEffect(() => {
         if (session?.user) {
-            const nameParts = session.user.name?.split(" ") || ["", ""];
             setProfile((prev) => ({
                 ...prev,
-                firstName: nameParts[0] || "",
-                lastName: nameParts.slice(1).join(" ") || "",
-                email: session.user.email || ""
+                name: session.user.name || "",
+                email: session.user.email || "",
+                profileImage: session.user.image || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=200&q=80"
             }));
         }
     }, [session]);
-
-    const [schedule] = useState([
-        { day: "Monday", hours: "09:00 AM - 05:00 PM", active: true },
-        { day: "Tuesday", hours: "09:00 AM - 05:00 PM", active: true },
-        { day: "Wednesday", hours: "09:00 AM - 01:00 PM", active: true },
-        { day: "Thursday", hours: "09:00 AM - 05:00 PM", active: true },
-        { day: "Friday", hours: "09:00 AM - 04:00 PM", active: true },
-        { day: "Saturday", hours: "Unavailable", active: false },
-        { day: "Sunday", hours: "Unavailable", active: false },
-    ]);
 
     const handleInputChange = (e) => {
         setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -65,16 +71,36 @@ export default function DoctorProfilePage() {
         setLoading(true);
         setSuccessMessage("");
 
+        // Final payload configured for MongoDB insert / update statements
+        const mongodbPayload = {
+            name: profile.name,
+            specialization: profile.specialization,
+            qualifications: profile.qualifications,
+            experience: Number(profile.experience),
+            consultationFee: Number(profile.consultationFee),
+            hospitalName: profile.hospitalName,
+            profileImage: profile.profileImage,
+            availableDays: availableDays,
+            availableSlots: availableSlots,
+            verificationStatus: verificationStatus,
+            // Auxiliary diagnostic fields
+            email: profile.email,
+            phone: profile.phone,
+            biography: profile.biography
+        };
+
+        // Output complete dataset cleanly into your inspector environment
+        console.log("Ready for MongoDB update operation:", mongodbPayload);
+
         setTimeout(() => {
             setLoading(false);
-            setSuccessMessage("Profile changes successfully updated.");
+            setSuccessMessage("Profile schema fields successfully parsed and logged.");
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 1200);
     };
 
     const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white px-4 py-2.5 text-sm !text-slate-900 !placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 disabled:opacity-60";
 
-    // 3. Fallback Layout: Session loading state skeleton
     if (isPending) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -86,7 +112,6 @@ export default function DoctorProfilePage() {
         );
     }
 
-    // 4. Fallback Layout: Unauthorized state screen
     if (!session?.user) {
         return (
             <div className="flex min-h-[80vh] items-center justify-center px-4">
@@ -106,13 +131,12 @@ export default function DoctorProfilePage() {
     return (
         <div className="space-y-8 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-700 dark:text-slate-300 transition-colors duration-200">
 
-            {/* Header Area */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
                     Profile Management
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Configure your public practitioner details, contact cards, and active clinic operating hours.
+                    Configure your public practitioner details, credentials, and active data pipelines.
                 </p>
             </div>
 
@@ -129,7 +153,7 @@ export default function DoctorProfilePage() {
                     <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 shadow-sm p-6 text-center">
                         <div className="relative w-32 h-32 mx-auto mb-4 group">
                             <img
-                                src={session.user.image || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=200&q=80"}
+                                src={profile.profileImage}
                                 alt="Doctor Portrait"
                                 className="w-full h-full rounded-full object-cover ring-4 ring-slate-100 dark:ring-slate-800 shadow-md"
                             />
@@ -141,28 +165,45 @@ export default function DoctorProfilePage() {
                                 <FaCamera className="text-xs" />
                             </button>
                         </div>
-                        <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                            Dr. {profile.firstName} {profile.lastName}
-                        </h3>
-                        <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-0.5">
-                            {profile.specialty} Specialist
+
+                        {/* Dynamic Status Badges Display Block */}
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                                {profile.name || "Dr. Practitioner"}
+                            </h3>
+
+                            {verificationStatus === "verified" && (
+                                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 text-[11px] font-bold px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-900/50 shadow-sm">
+                                    <FaCheckCircle className="text-xs" /> Verified
+                                </span>
+                            )}
+
+                            {verificationStatus === "pending" && (
+                                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50 shadow-sm">
+                                    <FaHourglassHalf className="text-xs animate-pulse" /> Pending
+                                </span>
+                            )}
+                        </div>
+
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mt-1.5">
+                            {profile.specialization} Specialist
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                            {profile.hospitalAffiliation}
+                            {profile.hospitalName}
                         </p>
                     </div>
 
-                    {/* Schedule Card */}
+                    {/* Operational Availability Card */}
                     <div className="bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800 shadow-sm p-6">
                         <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
                             <FaClock className="text-slate-500 dark:text-slate-400 text-sm" />
                             <h3 className="font-bold text-sm text-slate-900 dark:text-white">Active Availability hours</h3>
                         </div>
                         <div className="space-y-3">
-                            {schedule.map((slot, index) => (
+                            {availableSlots.map((slot, index) => (
                                 <div key={index} className="flex justify-between items-center text-xs">
                                     <span className="font-bold text-slate-500 dark:text-slate-400">{slot.day}</span>
-                                    <span className={`font-medium ${slot.active ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}>
+                                    <span className="font-medium text-slate-800 dark:text-slate-200">
                                         {slot.hours}
                                     </span>
                                 </div>
@@ -181,12 +222,8 @@ export default function DoctorProfilePage() {
 
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">First Name</label>
-                                <input type="text" name="firstName" value={profile.firstName} onChange={handleInputChange} className={inputClasses} required />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Last Name</label>
-                                <input type="text" name="lastName" value={profile.lastName} onChange={handleInputChange} className={inputClasses} required />
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Doctor Full Name</label>
+                                <input type="text" name="name" value={profile.name} onChange={handleInputChange} className={inputClasses} required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
@@ -196,13 +233,17 @@ export default function DoctorProfilePage() {
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Contact Telephone</label>
                                 <input type="text" name="phone" value={profile.phone} onChange={handleInputChange} className={inputClasses} required />
                             </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Years of Experience</label>
+                                <input type="number" name="experience" value={profile.experience} onChange={handleInputChange} className={inputClasses} required />
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Biography Summary</label>
                             <textarea
                                 name="biography"
-                                rows={4}
+                                rows={3}
                                 value={profile.biography}
                                 onChange={handleInputChange}
                                 className={`${inputClasses} !py-3 resize-none`}
@@ -220,18 +261,18 @@ export default function DoctorProfilePage() {
 
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Medical Specialty</label>
-                                <input type="text" name="specialty" value={profile.specialty} onChange={handleInputChange} className={inputClasses} required />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">License Registration ID</label>
-                                <input type="text" name="licenseNumber" value={profile.licenseNumber} onChange={handleInputChange} className={inputClasses} required />
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Medical Specialization</label>
+                                <input type="text" name="specialization" value={profile.specialization} onChange={handleInputChange} className={inputClasses} required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Primary Hospital Affiliation</label>
-                                <input type="text" name="hospitalAffiliation" value={profile.hospitalAffiliation} onChange={handleInputChange} className={inputClasses} required />
+                                <input type="text" name="hospitalName" value={profile.hospitalName} onChange={handleInputChange} className={inputClasses} required />
                             </div>
-                            <div>
+                            <div className="sm:col-span-2">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Qualifications & Accreditations</label>
+                                <input type="text" name="qualifications" value={profile.qualifications} onChange={handleInputChange} className={inputClasses} required placeholder="MD, Ph.D, Board Certified etc." />
+                            </div>
+                            <div className="sm:col-span-2">
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Consultation Session Fee ($ USD)</label>
                                 <input type="number" name="consultationFee" value={profile.consultationFee} onChange={handleInputChange} className={inputClasses} required />
                             </div>
@@ -251,7 +292,7 @@ export default function DoctorProfilePage() {
                             disabled={loading}
                             className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-xl shadow-md transition disabled:opacity-70"
                         >
-                            {loading ? "Saving Records..." : <><FaSave className="text-xs" /> Save Profile Details</>}
+                            {loading ? "Syncing Payload..." : <><FaSave className="text-xs" /> Save Profile Details</>}
                         </button>
                     </div>
                 </div>
