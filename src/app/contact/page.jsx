@@ -39,6 +39,9 @@ export default function ContactPage() {
         { icon: <FaMapMarkerAlt />, title: "Main Clinic", value: "123 Healthcare Ave, NY", sub: "Centrally located corporate building" },
     ];
 
+    // Force-lock string for input fields: White bg, black text, slate placeholder in light mode
+    const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white !text-slate-900 !placeholder-slate-400 px-4 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:!placeholder-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900";
+
     return (
         <main className="min-h-screen bg-slate-50 text-slate-700 dark:bg-slate-950 dark:text-slate-300 transition-colors duration-200 py-12">
             <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -109,7 +112,7 @@ export default function ContactPage() {
                                 <div className="grid sm:grid-cols-2 gap-5">
                                     {/* Name Input */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Your Name</label>
+                                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Your Name</label>
                                         <input
                                             type="text"
                                             name="name"
@@ -118,12 +121,12 @@ export default function ContactPage() {
                                             onChange={handleChange}
                                             disabled={loading}
                                             placeholder="John Doe"
-                                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                            className={inputClasses}
                                         />
                                     </div>
                                     {/* Email Input */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Email Address</label>
                                         <input
                                             type="email"
                                             name="email"
@@ -132,14 +135,14 @@ export default function ContactPage() {
                                             onChange={handleChange}
                                             disabled={loading}
                                             placeholder="you@example.com"
-                                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                            className={inputClasses}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Subject Input */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Subject Matter</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Subject Matter</label>
                                     <input
                                         type="text"
                                         name="subject"
@@ -148,13 +151,13 @@ export default function ContactPage() {
                                         onChange={handleChange}
                                         disabled={loading}
                                         placeholder="How can we help you?"
-                                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                        className={inputClasses}
                                     />
                                 </div>
 
                                 {/* Message Content Textarea */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Message / Inquiry Details</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Message / Inquiry Details</label>
                                     <textarea
                                         name="message"
                                         required
@@ -162,8 +165,8 @@ export default function ContactPage() {
                                         value={formData.message}
                                         onChange={handleChange}
                                         disabled={loading}
-                                        placeholder="Type comprehensive details regarding your scheduling anomaly or clinic sync question..."
-                                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900 resize-none"
+                                        placeholder="Type comprehensive details regarding your inquiry..."
+                                        className={`${inputClasses} resize-none`}
                                     ></textarea>
                                 </div>
 
@@ -190,7 +193,6 @@ export default function ContactPage() {
 
                         {/* Visual Map Aspect Container */}
                         <div className="w-full h-64 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative bg-slate-200 dark:bg-slate-900 shadow-sm group">
-                            {/* Feel free to replace this absolute container block with a native Google Maps iframe wrapper when production credentials roll out */}
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1)_1px,transparent_1px)] [background-size:24px_24px] opacity-60"></div>
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
                                 <div className="p-3 bg-white dark:bg-slate-950 rounded-full text-blue-600 shadow-md transform group-hover:scale-110 transition duration-300">

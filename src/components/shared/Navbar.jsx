@@ -2,28 +2,48 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes"; // next-themes ইম্পোর্ট করলাম
+import { useState, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 
 import {
     FaStethoscope,
     FaBars,
     FaTimes,
     FaSun,
-    FaMoon
+    FaMoon,
+    FaUserCircle,
+    FaThLarge, // Changed from FaLayout
+    FaSignOutAlt
 } from "react-icons/fa";
+import { signOut, useSession } from "@/src/lib/auth-client";
 
 export default function Navbar() {
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false);
-    const { theme, setTheme } = useTheme(); // থিম স্টেট ও ফাংশন
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
-    // Hydration mismatch (সার্ভার ও ক্লায়েন্ট থিম অমিল) রোধ করতে এই ইফেক্টটি জরুরি
+    // Fetching session state using Better Auth Client hooks
+    const { data: session, isPending } = useSession();
+    const modalRef = useRef(null);
+
     useEffect(() => {
         setMounted(true);
     }, []);
 
+    // Close profile modal if clicking outside of it
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (modalRef.current && !modalRef.current.contains(event.target)) {
+                setProfileModalOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Base navigation links
     const navLinks = [
         { name: "Home", href: "/" },
         { name: "Doctors", href: "/doctors" },
@@ -31,9 +51,19 @@ export default function Navbar() {
         { name: "Contact", href: "/contact" },
     ];
 
+    // Append Dashboard to links if the user is authenticated
+    if (session) {
+        navLinks.push({ name: "Dashboard", href: "/dashboard" });
+    }
+
     const isActive = (href) => {
         if (href === "/") return pathname === "/";
         return pathname.startsWith(href);
+    };
+
+    const handleLogout = async () => {
+        await signOut();
+        setProfileModalOpen(false);
     };
 
     return (
@@ -55,8 +85,8 @@ export default function Navbar() {
                                 key={link.href}
                                 href={link.href}
                                 className={`rounded-lg px-4 py-2 text-sm font-medium transition ${isActive(link.href)
-                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                                     }`}
                             >
                                 {link.name}
@@ -77,16 +107,62 @@ export default function Navbar() {
                             </button>
                         )}
 
-                        <Link href="/login" className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                            Login
-                        </Link>
-                        <Link href="/register" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition">
-                            Register
-                        </Link>
+                        {/* Authentication Layout Conditional Render */}
+                        {!isPending && (
+                            session ? (
+                                <div className="relative" ref={modalRef}>
+                                    {/* Profile Avatar Trigger Button */}
+                                    <button
+                                        onClick={() => setProfileModalOpen(!profileModalOpen)}
+                                        className="h-9 w-9 rounded-full overflow-hidden border-2 border-blue-600 dark:border-blue-400 focus:outline-none transition hover:opacity-90 flex items-center justify-center bg-slate-100 dark:bg-slate-800"
+                                    >
+                                        {session.user?.image ? (
+                                            <img src={session.user.image} alt="User Avatar" className="h-full w-full object-cover" />
+                                        ) : (
+                                            <FaUserCircle className="text-2xl text-slate-500" />
+                                        )}
+                                    </button>
+
+                                    {/* Profile Dropdown Modal */}
+                                    {profileModalOpen && (
+                                        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-150">
+                                            <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{session.user?.name}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{session.user?.email}</p>
+                                            </div>
+                                            <Link
+                                                href="/dashboard"
+                                                onClick={() => setProfileModalOpen(false)}
+                                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                            >
+                                                <FaThLarge className="text-xs text-slate-400" /> {/* Updated here */}
+                                                <span>Dashboard</span>
+                                            </Link>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left transition"
+                                            >
+                                                <FaSignOutAlt className="text-xs" />
+                                                <span>Sign Out</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                        Login
+                                    </Link>
+                                    <Link href="/register" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition">
+                                        Register
+                                    </Link>
+                                </>
+                            )
+                        )}
                     </div>
 
                     {/* Mobile Menu Controls */}
-                    <div className="flex items-center gap-2 md:hidden">
+                    <div className="flex items-center gap-2 Snowy-Action md:hidden">
                         {/* Mobile Theme Toggle */}
                         {mounted && (
                             <button
@@ -114,22 +190,48 @@ export default function Navbar() {
                                     href={link.href}
                                     onClick={() => setMenuOpen(false)}
                                     className={`rounded-lg px-4 py-3 text-sm font-medium ${isActive(link.href)
-                                            ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                                         }`}
                                 >
                                     {link.name}
                                 </Link>
                             ))}
 
-                            <div className="mt-3 flex flex-col gap-2">
-                                <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-lg border dark:border-slate-700 px-4 py-3 text-center font-medium text-slate-700 dark:text-slate-300">
-                                    Login
-                                </Link>
-                                <Link href="/register" onClick={() => setMenuOpen(false)} className="rounded-lg bg-blue-600 dark:bg-blue-500 px-4 py-3 text-center font-medium text-white">
-                                    Register
-                                </Link>
-                            </div>
+                            {!isPending && (
+                                session ? (
+                                    <div className="mt-2 border-t border-slate-100 dark:border-slate-800 pt-3 px-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 overflow-hidden max-w-[70%]">
+                                            <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                {session.user?.image ? (
+                                                    <img src={session.user.image} alt="User Avatar" className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <FaUserCircle className="text-xl text-slate-500" />
+                                                )}
+                                            </div>
+                                            <div className="truncate">
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{session.user?.name}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{session.user?.email}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => { setMenuOpen(false); handleLogout(); }}
+                                            className="text-sm font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-lg"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="mt-3 flex flex-col gap-2">
+                                        <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-lg border dark:border-slate-700 px-4 py-3 text-center font-medium text-slate-700 dark:text-slate-300">
+                                            Login
+                                        </Link>
+                                        <Link href="/register" onClick={() => setMenuOpen(false)} className="rounded-lg bg-blue-600 dark:bg-blue-500 px-4 py-3 text-center font-medium text-white">
+                                            Register
+                                        </Link>
+                                    </div>
+                                )
+                            )}
                         </div>
                     </div>
                 )}

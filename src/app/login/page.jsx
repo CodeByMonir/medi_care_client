@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaStethoscope, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { signIn } from "@/src/lib/auth-client";
+import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -25,8 +26,6 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            // Replace this block with your actual Better Auth client call:
-
             const { data, error } = await signIn.email({
                 email: formData.email,
                 password: formData.password,
@@ -43,9 +42,9 @@ export default function LoginPage() {
             setSuccess("Signed in successfully! Redirecting...");
 
             setTimeout(() => {
-                router.push("/"); // Redirect to homepage or dashboard
                 router.refresh();
-            }, 1500);
+                router.push("/"); // Redirect to homepage or dashboard
+            }, 1000);
 
         } catch (err) {
             setError("Failed to connect to the authentication server.");
@@ -53,6 +52,13 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+
+    const handleGoogleLogIn = async () => {
+        // Implement Google Sign-In logic here
+    };
+
+    // Important modifiers force white background and black text on light mode environments
+    const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white pl-10 pr-10 py-2.5 text-sm !text-slate-900 !placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900";
 
     return (
         <main className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950 transition-colors duration-200">
@@ -85,7 +91,7 @@ export default function LoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Email Input */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Email Address</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                                 <FaEnvelope className="text-sm" />
@@ -98,7 +104,7 @@ export default function LoginPage() {
                                 onChange={handleChange}
                                 placeholder="you@example.com"
                                 disabled={loading}
-                                className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                className={inputClasses}
                             />
                         </div>
                     </div>
@@ -106,7 +112,7 @@ export default function LoginPage() {
                     {/* Password Input with Toggle */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
                             <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                                 Forgot password?
                             </Link>
@@ -123,7 +129,7 @@ export default function LoginPage() {
                                 onChange={handleChange}
                                 placeholder="••••••••"
                                 disabled={loading}
-                                className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-10 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                className={inputClasses}
                             />
                             {/* Toggle Button */}
                             <button
@@ -154,6 +160,35 @@ export default function LoginPage() {
                         )}
                     </button>
                 </form>
+
+                {/* Divider Line */}
+                <div className="relative my-5">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-slate-400 dark:bg-slate-900">Or continue with</span>
+                    </div>
+                </div>
+
+                {/* Google Sign In Button */}
+                <button
+                    onClick={() => handleGoogleLogIn()}
+                    disabled={loading}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/50 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                    {loading ? (
+                        <>
+                            <FaSpinner className="animate-spin text-base" />
+                            Connecting...
+                        </>
+                    ) : (
+                        <>
+                            <FcGoogle className="h-5 w-5" />
+                            <span>Sign In with Google</span>
+                        </>
+                    )}
+                </button>
 
                 {/* Footer Redirection Link */}
                 <div className="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">

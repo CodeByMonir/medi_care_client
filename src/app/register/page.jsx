@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FaStethoscope, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner, FaUserMd, FaUserInjured } from "react-icons/fa";
+import { FaStethoscope, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner, FaUserMd, FaUserInjured, FaLink, FaImage } from "react-icons/fa";
 import { signUp } from "@/src/lib/auth-client";
+import { FcGoogle } from "react-icons/fc";
 
 export default function RegisterPage() {
     const router = useRouter();
-    // Added 'role' with a sensible default value ('patient')
-    const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "patient" });
+    const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "patient", imageUrl: "" });
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -24,7 +24,6 @@ export default function RegisterPage() {
         setError("");
         setSuccess("");
 
-        // Password Validation Rules
         const password = formData.password;
         const hasMinLength = password.length >= 6;
         const hasCapitalLetter = /[A-Z]/.test(password);
@@ -38,15 +37,15 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            // Better Auth passes additional custom database properties inside the data object
             const { data, error } = await signUp.email({
                 email: formData.email,
                 password: formData.password,
                 name: formData.name,
-                role: formData.role
+                role: formData.role,
+                image: formData.imageUrl || undefined
             });
 
-            console.log('Success', data)
+            console.log('Success', data);
 
             if (error) {
                 setError(error.message || "Something went wrong. Please try again.");
@@ -54,7 +53,7 @@ export default function RegisterPage() {
             }
 
             setSuccess("Account created successfully! Redirecting...");
-            setFormData({ name: "", email: "", password: "", role: "patient" });
+            setFormData({ name: "", email: "", password: "", role: "patient", imageUrl: "" });
 
             setTimeout(() => {
                 router.push("/login");
@@ -66,6 +65,13 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    const handleGoogleLogIn = async () => {
+        // Handle Google OAuth authentication sequence
+    };
+
+    // Important modifiers forces white backgrounds and black text on light mode environments
+    const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white pl-10 pr-4 py-2.5 text-sm !text-slate-900 !placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900";
 
     return (
         <main className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950 transition-colors duration-200">
@@ -99,7 +105,7 @@ export default function RegisterPage() {
 
                     {/* Role Selection Blocks */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Register As</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Register As</label>
                         <div className="grid grid-cols-2 gap-3">
                             {/* Patient Card */}
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition text-center select-none ${formData.role === "patient"
@@ -141,7 +147,7 @@ export default function RegisterPage() {
 
                     {/* Name Input */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Full Name</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Full Name</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                                 <FaUser className="text-sm" />
@@ -154,14 +160,14 @@ export default function RegisterPage() {
                                 onChange={handleChange}
                                 placeholder="John Doe"
                                 disabled={loading}
-                                className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                className={inputClasses}
                             />
                         </div>
                     </div>
 
                     {/* Email Input */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Email Address</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                                 <FaEnvelope className="text-sm" />
@@ -174,14 +180,48 @@ export default function RegisterPage() {
                                 onChange={handleChange}
                                 placeholder="you@example.com"
                                 disabled={loading}
-                                className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                className={inputClasses}
                             />
+                        </div>
+                    </div>
+
+                    {/* Profile Image URL Input */}
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Profile Image URL</label>
+                        <div className="flex gap-2 items-center">
+                            <div className="relative flex-1">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                                    <FaLink className="text-sm" />
+                                </div>
+                                <input
+                                    type="url"
+                                    name="imageUrl"
+                                    value={formData.imageUrl}
+                                    onChange={handleChange}
+                                    placeholder="https://example.com/avatar.jpg"
+                                    disabled={loading}
+                                    className={inputClasses}
+                                />
+                            </div>
+                            {/* Live mini preview circle */}
+                            <div className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-center overflow-hidden shadow-sm">
+                                {formData.imageUrl ? (
+                                    <img
+                                        src={formData.imageUrl}
+                                        alt="Preview"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => { e.target.src = ""; }}
+                                    />
+                                ) : (
+                                    <FaImage className="text-slate-400 dark:text-slate-600 text-sm" />
+                                )}
+                            </div>
                         </div>
                     </div>
 
                     {/* Password Input with Toggle */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">Password</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                                 <FaLock className="text-sm" />
@@ -194,7 +234,7 @@ export default function RegisterPage() {
                                 onChange={handleChange}
                                 placeholder="••••••••"
                                 disabled={loading}
-                                className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-10 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 dark:disabled:bg-slate-900"
+                                className={`${inputClasses} pr-10`}
                             />
                             <button
                                 type="button"
@@ -227,6 +267,35 @@ export default function RegisterPage() {
                         )}
                     </button>
                 </form>
+
+                {/* Divider Line */}
+                <div className="relative my-5">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-slate-400 dark:bg-slate-900">Or continue with</span>
+                    </div>
+                </div>
+
+                {/* Google Sign In Button */}
+                <button
+                    onClick={() => handleGoogleLogIn()}
+                    disabled={loading}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/50 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                    {loading ? (
+                        <>
+                            <FaSpinner className="animate-spin text-base" />
+                            Connecting...
+                        </>
+                    ) : (
+                        <>
+                            <FcGoogle className="h-5 w-5" />
+                            <span>Sign Up with Google</span>
+                        </>
+                    )}
+                </button>
 
                 {/* Footer Redirection Link */}
                 <div className="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
