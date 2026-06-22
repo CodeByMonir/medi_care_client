@@ -236,7 +236,7 @@ export default function DoctorsPage() {
                                         <span className="text-sm font-black text-slate-900 dark:text-white">${doctor.consultationFee || "N/A"}</span>
                                     </div>
                                     <Link
-                                        href={`/doctors/${doctor.doctorId || doctor._id}`}
+                                        href={`/doctors/${doctor.license}`}
                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
                                     >
                                         View Details <FaChevronRight className="text-[9px]" />
@@ -296,7 +296,7 @@ export default function DoctorsPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <Link
-                                                    href={`/doctors/${doctor.doctorId || doctor._id}`}
+                                                    href={`/doctors/${doctor.license}`}
                                                     className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                                                 >
                                                     Details <FaChevronRight className="text-[9px]" />

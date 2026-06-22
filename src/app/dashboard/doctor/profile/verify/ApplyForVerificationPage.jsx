@@ -134,6 +134,7 @@ export default function ApplyForVerificationPage({ doctor }) {
             availableDays: availableDays,
             availableSlots: formattedSlots,
             biography: profile.biography,
+            createdAt: new Date(),
         };
 
         console.log("Ready for MongoDB update operation:", doctorData);

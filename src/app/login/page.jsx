@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FaStethoscope, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
 import { signIn } from "@/src/lib/auth-client";
 import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
+
+    const searchParams = useSearchParams();
+
+    const redirectTo = searchParams.get("redirect") || "/";
+
     const router = useRouter();
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +48,7 @@ export default function LoginPage() {
 
             setTimeout(() => {
                 router.refresh();
-                router.push("/"); // Redirect to homepage or dashboard
+                router.push(redirectTo); // Redirect to homepage or dashboard
             }, 1000);
 
         } catch (err) {
@@ -193,7 +198,8 @@ export default function LoginPage() {
                 {/* Footer Redirection Link */}
                 <div className="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
                     Don't have an account yet?{" "}
-                    <Link href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link href="/register"
+                    className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                         Sign Up
                     </Link>
                 </div>
