@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaStethoscope, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner, FaUserMd, FaUserInjured, FaLink, FaImage } from "react-icons/fa";
-import { signUp } from "@/src/lib/auth-client";
+import { signOut, signUp } from "@/src/lib/auth-client";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "react-toastify";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -45,8 +46,6 @@ export default function RegisterPage() {
                 image: formData.imageUrl || undefined
             });
 
-            console.log('Success', data);
-
             if (error) {
                 setError(error.message || "Something went wrong. Please try again.");
                 return;
@@ -56,7 +55,9 @@ export default function RegisterPage() {
             setFormData({ name: "", email: "", password: "", role: "patient", imageUrl: "" });
 
             setTimeout(() => {
+                signOut();
                 router.push("/login");
+                toast.success("Account created successfully! Redirecting...")
             }, 2000);
 
         } catch (err) {

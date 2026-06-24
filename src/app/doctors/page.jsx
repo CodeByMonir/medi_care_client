@@ -181,8 +181,8 @@ export default function DoctorsPage() {
                 {viewMode === 'grid' && sortedDoctors.length > 0 && (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {sortedDoctors.map((doctor) => (
-                            <div
-                                key={doctor.doctorId || doctor._id}
+                            <main
+                                key={doctor.license}
                                 className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl shadow-sm p-5 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
                             >
                                 <div className="space-y-4">
@@ -242,7 +242,7 @@ export default function DoctorsPage() {
                                         View Details <FaChevronRight className="text-[9px]" />
                                     </Link>
                                 </div>
-                            </div>
+                            </main>
                         ))}
                     </div>
                 )}
@@ -265,7 +265,7 @@ export default function DoctorsPage() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                                     {sortedDoctors.map((doctor) => (
-                                        <tr key={doctor.doctorId || doctor._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition">
+                                        <tr key={doctor.license} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
                                                     <img

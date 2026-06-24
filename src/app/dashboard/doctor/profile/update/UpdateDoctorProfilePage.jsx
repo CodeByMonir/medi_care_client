@@ -13,12 +13,14 @@ import {
     FaPlus,
     FaTrash,
     FaCalendarAlt,
-    FaMedkit
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { getDoctorData } from "@/src/lib/api/doctors";
+import { getDoctorData, updateDoctorData } from "@/src/lib/api/doctors";
 
 export default function UpdateDoctorProfilePage({ doctor }) {
+
+    const doctorId = doctor?.id;
+
     const router = useRouter();
     const { data: session, isPending } = useSession();
     const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function UpdateDoctorProfilePage({ doctor }) {
 
     // Profile State Structure
     const [profile, setProfile] = useState({
-        doctorId: doctor?.id || "",
+        doctorId: doctorId || "",
         name: "",
         email: "",
         phone: "",
@@ -38,7 +40,6 @@ export default function UpdateDoctorProfilePage({ doctor }) {
         hospitalName: "",
         profileImage: "",
         license: "",
-        availableDays: [],
         availableSlots: []
     });
 
@@ -53,34 +54,40 @@ export default function UpdateDoctorProfilePage({ doctor }) {
                 setProfile((prev) => ({
                     ...prev,
                     doctorId: targetId,
-                    name: "", phone: "", specialization: "", qualifications: "", experience: "", biography: "", consultationFee: "", hospitalName: "", profileImage: "", license: "", availableDays: [], availableSlots: []
+                    name: "", phone: "", specialization: "", qualifications: "", experience: "", biography: "", consultationFee: "", hospitalName: "", profileImage: "", license: "", availableSlots: []
                 }));
                 return;
             }
 
-            const parsedProfiles = (Array.isArray(doctorData) ? doctorData : [doctorData]).map((doc) => ({
-                doctorId: doc?.doctorId || targetId,
-                name: doc?.name || "",
-                email: doc?.email || session?.user?.email || "",
-                phone: doc?.phone || "",
-                specialization: doc?.specialization || "",
-                qualifications: doc?.qualifications || "",
-                experience: doc?.experience || "",
-                biography: doc?.biography || "",
-                consultationFee: doc?.consultationFee || "",
-                hospitalName: doc?.hospitalName || "",
-                profileImage: doc?.profileImage || "",
-                license: doc?.license || "",
-                availableDays: doc?.availableDays || [],
-                availableSlots: (doc?.availableSlots || []).map(slot => ({
+            const parsedProfiles = (Array.isArray(doctorData) ? doctorData : [doctorData]).map((doc) => {
+                const slots = (doc?.availableSlots || []).map(slot => ({
                     day: slot?.day || "Monday",
                     hours: slot?.hours || "09:00 AM - 05:00 PM"
-                }))
-            }));
+                }));
+
+                // FIX HERE: Extracts unique days directly from the available slots
+                const extractedDays = Array.from(new Set(slots.map(s => s.day)));
+
+                return {
+                    doctorId: doc?.doctorId || targetId,
+                    name: doc?.name || "",
+                    email: doc?.email || session?.user?.email || "",
+                    phone: doc?.phone || "",
+                    specialization: doc?.specialization || "",
+                    qualifications: doc?.qualifications || "",
+                    experience: doc?.experience || "",
+                    biography: doc?.biography || "",
+                    consultationFee: doc?.consultationFee || "",
+                    hospitalName: doc?.hospitalName || "",
+                    profileImage: doc?.profileImage || "",
+                    license: doc?.license || "",
+                    availableDays: extractedDays, // Populated from available slots
+                    availableSlots: slots
+                };
+            });
 
             if (parsedProfiles.length > 0) {
                 setProfile(parsedProfiles[0]);
-                toast.success("Operational schemas fetched cleanly.");
             }
         } catch (error) {
             console.error("Error looking up doctor configuration:", error);
@@ -90,31 +97,17 @@ export default function UpdateDoctorProfilePage({ doctor }) {
         }
     };
 
-    // Initial configuration sync hook - automatically fires using doctor.id background reference
     useEffect(() => {
-        if (!isPending && session?.user && doctor?.id) {
-            loadDoctorRecord(doctor.id);
+        if (!isPending && session?.user && doctorId) {
+            loadDoctorRecord(doctorId);
         }
-    }, [session, isPending, doctor?.id]);
+    }, [session, isPending, doctorId]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setProfile((prev) => ({ ...prev, [name]: value }));
     };
 
-    // --- Dynamic Nested Multi-field Management Handlers ---
-
-    // Weekday String Checkbox Arrays
-    const handleDayCheckboxChange = (day) => {
-        setProfile(prev => {
-            const days = prev.availableDays.includes(day)
-                ? prev.availableDays.filter(d => d !== day)
-                : [...prev.availableDays, day];
-            return { ...prev, availableDays: days };
-        });
-    };
-
-    // Shift Hour Records Matrices Actions
     const handleSlotChange = (index, field, value) => {
         setProfile(prev => {
             const updatedSlots = [...prev.availableSlots];
@@ -141,26 +134,30 @@ export default function UpdateDoctorProfilePage({ doctor }) {
         e.preventDefault();
         setSubmitting(true);
 
+        // FIX HERE: Generate unique availableDays from the slots before console/submission
+        const computedDays = Array.from(new Set(profile.availableSlots.map(s => s.day)));
+        const finalProfilePayload = {
+            ...profile,
+            availableDays: computedDays
+        };
+
         try {
-            const response = await fetch("/api/doctor/profile", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(profile)
-            });
-
-            if (!response.ok) throw new Error("Failed to overwrite data state.");
-
+            
+            updateDoctorData(doctorId, finalProfilePayload);
             toast.success("Profile records updated successfully.");
             router.push("/dashboard/doctor/profile");
-        } catch (error) {
+        }
+        catch (error) {
             console.error("Form update push failed:", error);
             toast.error("Failed to commit profile updates configuration.");
-        } finally {
+        }
+        finally {
             setSubmitting(false);
         }
     };
 
-    const inputClasses = "w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed";
+    // Styling constants
+    const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white px-4 py-2.5 text-sm !text-black placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed";
     const labelClasses = "block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2";
     const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -248,35 +245,7 @@ export default function UpdateDoctorProfilePage({ doctor }) {
                         <h2 className="font-bold text-base text-slate-900 dark:text-white">Duty Availability Settings</h2>
                     </div>
 
-                    {/* Checkbox selector matrix for available days */}
-                    <div>
-                        <label className={labelClasses}>Available Practice Days</label>
-                        <div className="flex flex-wrap gap-3 mt-2">
-                            {daysOfWeek.map((day) => {
-                                const isChecked = profile.availableDays.includes(day);
-                                return (
-                                    <label
-                                        key={day}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer select-none transition ${isChecked
-                                            ? "bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900"
-                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-950 dark:text-slate-400 dark:border-slate-800"
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={() => handleDayCheckboxChange(day)}
-                                            className="hidden"
-                                        />
-                                        {day}
-                                    </label>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Operational Shift block configuration matrices */}
-                    <div className="space-y-4 pt-2">
+                    <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <label className={labelClasses}>Configured Operational Shift Slots</label>
                             <button
@@ -289,29 +258,33 @@ export default function UpdateDoctorProfilePage({ doctor }) {
                         </div>
 
                         {profile.availableSlots.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic bg-slate-50 dark:bg-slate-950 p-4 rounded-xl text-center border border-dashed border-slate-200 dark:border-slate-800">
+                            <p className="text-xs text-slate-400 italic bg-white dark:bg-slate-950 p-4 rounded-xl text-center border border-dashed border-slate-200 dark:border-slate-800">
                                 No specific hourly operational blocks initialized. Add rows to define hours.
                             </p>
                         ) : (
                             <div className="space-y-3">
                                 {profile.availableSlots.map((slot, index) => (
-                                    <div key={index} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                                    <div key={index} className="flex items-center gap-3 !bg-white dark:!bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+
+                                        {/* Day Select Dropdown */}
                                         <select
                                             value={slot.day}
                                             onChange={(e) => handleSlotChange(index, "day", e.target.value)}
-                                            className="bg-white dark:bg-slate-900 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 px-2 py-1.5 outline-none text-slate-800 dark:text-slate-200"
+                                            className="!bg-white dark:bg-slate-900 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 px-2 py-1.5 outline-none !text-black dark:text-slate-200"
                                         >
-                                            {daysOfWeek.map(d => <option key={d} value={d}>{d}</option>)}
+                                            {daysOfWeek.map(d => <option key={d} value={d} className="bg-white text-black">{d}</option>)}
                                         </select>
 
+                                        {/* Hours Input Field */}
                                         <input
                                             type="text"
                                             value={slot.hours}
                                             onChange={(e) => handleSlotChange(index, "hours", e.target.value)}
                                             placeholder="e.g. 09:00 AM - 05:00 PM"
-                                            className="flex-1 bg-white dark:bg-slate-900 text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 outline-none text-slate-800 dark:text-slate-200"
+                                            className="flex-1 !bg-white dark:bg-slate-900 text-xs rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 outline-none !text-black dark:text-slate-200"
                                         />
 
+                                        {/* Remove Action Button */}
                                         <button
                                             type="button"
                                             onClick={() => removeAvailableSlotNode(index)}

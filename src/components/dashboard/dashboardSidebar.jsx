@@ -12,15 +12,32 @@ import {
     FaCreditCard,
     FaStar,
     FaSignOutAlt,
-    FaStethoscope
+    FaCalendarAlt,
+    FaClipboardList,
+    FaUserMd,
+    FaUsers,
+    FaCogs
 } from "react-icons/fa";
+import { FaPrescriptionBottleMedical } from "react-icons/fa6";
+import { signOut, useSession } from "@/src/lib/auth-client";
 
-export default function PatientDashboard({ onLogout }) {
+export default function DashboardSidebar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Sidebar Routes Definitions 
-    const menuItems = [
+    const {data: session, isPending} = useSession();
+    const role = session?.user?.role;
+    // 1. Doctor Routes
+    const doctorRoutes = [
+        { href: "/dashboard/doctor", name: "Overview", icon: <FaThLarge /> },
+        { href: "/dashboard/doctor/schedule", name: "Manage Schedule", icon: <FaCalendarAlt /> },
+        { href: "/dashboard/doctor/requests", name: "Appointment Requests", icon: <FaClipboardList /> },
+        { href: "/dashboard/doctor/prescriptions", name: "Prescriptions", icon: <FaPrescriptionBottleMedical /> },
+        { href: "/dashboard/doctor/profile", name: "Profile Management", icon: <FaUserMd /> },
+    ];
+
+    // 2. Patient Routes 
+    const patientRoutes = [
         { href: "/dashboard/patient", name: "Overview", icon: <FaThLarge /> },
         { href: "/dashboard/patient/profile", name: "My Profile", icon: <FaUser /> },
         { href: "/dashboard/patient/appointments", name: "My Appointments", icon: <FaCalendarCheck /> },
@@ -28,15 +45,37 @@ export default function PatientDashboard({ onLogout }) {
         { href: "/dashboard/patient/reviews", name: "My Reviews", icon: <FaStar /> },
     ];
 
+    // 3. Admin Routes
+    const adminRoutes = [
+        { href: "/dashboard/admin", name: "Overview", icon: <FaThLarge /> },
+        { href: "/dashboard/admin/users", name: "Manage Users", icon: <FaUsers /> },
+        { href: "/dashboard/admin/doctors", name: "Verify Doctors", icon: <FaUserMd /> },
+        { href: "/dashboard/admin/settings", name: "System Settings", icon: <FaCogs /> },
+    ];
+
+    // Conditional evaluation based on the role prop
+    let menuItems = [];
+    if (role === "doctor") {
+        menuItems = doctorRoutes;
+    } else if (role === "admin") {
+        menuItems = adminRoutes;
+    } else {
+        menuItems = patientRoutes; // Defaults to patient fallback
+    }
+
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
+
+    const handleLogout = async () => {
+            await signOut();
+            setProfileModalOpen(false);
+        };
 
     return (
         <>
             {/* MOBILE FLOATING TRIGGER TOP NAVBAR */}
             <div className="md:hidden flex items-center justify-between h-10 bg-white dark:bg-slate-900 dark:border-slate-800 sticky top-0 z-40 rounded-2xl">
-
                 <button
                     onClick={toggleMobileMenu}
                     className="px-3 text-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
@@ -62,7 +101,7 @@ export default function PatientDashboard({ onLogout }) {
                 <div>
                     {/* Mobile Only Header Close Bar */}
                     <div className="h-16 flex md:hidden items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-                        <span className="font-semibold text-slate-400 text-sm">Navigation</span>
+                        <span className="font-semibold text-slate-400 text-sm capitalize">{role || "Patient"} Panel</span>
                         <button
                             className="text-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg transition"
                             onClick={() => setIsMobileMenuOpen(false)}
@@ -75,14 +114,13 @@ export default function PatientDashboard({ onLogout }) {
                     {/* Route Navigation Links */}
                     <nav className="p-4 space-y-1">
                         {menuItems.map((item) => {
-                            // Check active page path matching
                             const isActive = pathname === item.href;
 
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    onClick={() => setIsMobileMenuOpen(false)} // Close drawer on navigation selection
+                                    onClick={() => setIsMobileMenuOpen(false)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
                                         ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
                                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
@@ -101,7 +139,7 @@ export default function PatientDashboard({ onLogout }) {
                 {/* Footer Sign Out Action */}
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                     <button
-                        onClick={onLogout}
+                        onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors duration-150"
                     >
                         <FaSignOutAlt className="text-base" />

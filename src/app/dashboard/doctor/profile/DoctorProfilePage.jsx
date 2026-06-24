@@ -18,7 +18,7 @@ import {
 import { toast } from "react-toastify";
 import { getDoctorData } from "@/src/lib/api/doctors";
 
-export default function DoctorProfilePage({ doctor }) {
+export default function DoctorProfilePage() {
     const { data: session, isPending } = useSession();
     const [loading, setLoading] = useState(true);
     const [isRegistered, setIsRegistered] = useState(true);
@@ -47,8 +47,10 @@ export default function DoctorProfilePage({ doctor }) {
 
             try {
                 setLoading(true);
-                const doctorId = doctor.id; // Replace with your dynamic context ID as needed
+                const doctorId = session?.user?.id; // Replace with your dynamic context ID as needed
                 const doctorData = await getDoctorData(doctorId);
+
+                console.log("api data", doctorData)
 
                 // Handle scenarios where doctorData is missing or empty
                 if (!doctorData || (Array.isArray(doctorData) && doctorData.length === 0)) {
@@ -112,6 +114,8 @@ export default function DoctorProfilePage({ doctor }) {
         );
     }
 
+
+    // unauthorized session
     if (!session?.user) {
         return (
             <div className="flex min-h-screen items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">

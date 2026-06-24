@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { createDoctor } from "@/src/lib/actions/doctors";
 import { toast } from "react-toastify";
+import { redirect } from "next/navigation";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -137,14 +138,11 @@ export default function ApplyForVerificationPage({ doctor }) {
             createdAt: new Date(),
         };
 
-        console.log("Ready for MongoDB update operation:", doctorData);
-
         try {
             const res = await createDoctor(doctorData);
             if (res?.insertedId) {
                 toast.success("Requested for Verification Successfully");
                 setSuccessMessage(`Your application files under ID ${profile.license} have been recorded and sent for processing.`);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 toast.error("Failed to submit request.");
             }
@@ -154,6 +152,8 @@ export default function ApplyForVerificationPage({ doctor }) {
         } finally {
             setLoading(false);
         }
+
+        redirect('/dashboard/doctor/profile')
     };
 
     const inputClasses = "w-full rounded-xl border border-slate-300 !bg-white px-4 py-2.5 text-sm !text-slate-900 !placeholder-slate-400 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:!bg-slate-950 dark:!text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400 disabled:opacity-60";

@@ -6,6 +6,8 @@ import { FaUserMd, FaChevronLeft, FaHospital, FaStethoscope } from 'react-icons/
 import { getDoctorDetails } from '@/src/lib/api/doctors';
 import AppointmentForm from './AppointmentForm';
 import { stripe } from '@/src/lib/stripe';
+import { toast } from 'react-toastify';
+import { createAppointments } from '@/src/lib/actions/doctors';
 
 function getUpcomingDatesForDays(allowedDays) {
     const dates = [];
@@ -76,12 +78,16 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
     const operationalDays = doctor.availableSlots?.map(slot => slot.day) || [];
     const validAppointmentDates = getUpcomingDatesForDays(operationalDays);
 
+
+
     async function handleFormSubmit(formData) {
         'use server';
-        const data = {
+        const appointmentData = {
             appointmentStatus: "pending",
             patientName: formData.get('patientName'),
             patientEmail: formData.get('patientEmail'),
+            doctorName: doctor?.name,
+            specialization: doctor?.specialization,
             appointmentDate: formData.get('appointmentDate'),
             appointmentSlot: formData.get('appointmentSlot'),
             patientGender: formData.get('patientGender'),
@@ -93,8 +99,22 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
         };
 
 
-        toast.success('Congratulation! You submitted appointment successfully.')
-        redirect('/dashboard/patient/appointments')
+        try {
+            const res = await createAppointments(appointmentData);
+            if (res?.insertedId) {
+                toast.success("Requested for Appointments Successfully");
+            } else {
+                toast.error("Failed to submit request.");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("An error occurred during submission.");
+        } finally {
+            setLoading(false);
+        }
+
+        console.log(data)
+        // redirect('/dashboard/patient/appointments')
     }
 
     return (

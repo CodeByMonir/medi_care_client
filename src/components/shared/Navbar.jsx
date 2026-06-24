@@ -52,8 +52,17 @@ export default function Navbar() {
     ];
 
     // Append Dashboard to links if the user is authenticated
+    const dashboardLinks = {
+        patient: "/dashboard/patient",
+        doctor: "/dashboard/doctor",
+        admin: "/dashboard/admin"
+    }
+
     if (session) {
-        navLinks.push({ name: "Dashboard", href: "/dashboard" });
+        navLinks.push({
+            name: "Dashboard",
+            href: dashboardLinks[session?.user?.role || 'patient']
+        });
     }
 
     const isActive = (href) => {
