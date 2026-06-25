@@ -1,28 +1,88 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
+import { toast } from 'react-toastify';
+import { redirect, useRouter } from 'next/navigation';
+import { createAppointments } from '@/src/lib/api/appointments';
+import { createPayments } from '@/src/lib/api/payments';
 
-export default function AppointmentForm({ doctor, user, handleFormSubmit, validAppointmentDates }) {
+export default function AppointmentForm({ doctor, user, sessionId, validAppointmentDates, resolvedParams }) {
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
     const [selectedDate, setSelectedDate] = useState('');
 
-    // Extracts the day of the week (e.g., "monday") from the selected YYYY-MM-DD string
     const getSelectedDayName = (dateString) => {
         if (!dateString) return '';
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dateParts = dateString.split('-'); // [YYYY, MM, DD]
+        const dateParts = dateString.split('-');
         const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
         return daysOfWeek[dateObj.getDay()].toLowerCase();
     };
 
     const currentDayName = getSelectedDayName(selectedDate);
 
-    // Filters slot arrays to only match the selected day of the week
     const filteredSlots = doctor.availableSlots?.filter(
         (slot) => slot.day.toLowerCase() === currentDayName
     ) || [];
 
+    // Client-side action execution wrapper
+    const clientAction = async (formData) => {
+        const appointmentData = {
+            appointmentStatus: "pending",
+            patientName: formData.get('patientName'),
+            patientEmail: formData.get('patientEmail'),
+            doctorName: doctor?.name,
+            specialization: doctor?.specialization,
+            appointmentDate: formData.get('appointmentDate'),
+            appointmentSlot: formData.get('appointmentSlot'),
+            patientGender: formData.get('patientGender'),
+            patientPhone: formData.get('patientPhone'),
+            symptoms: formData.get('symptoms'),
+            patientId: user.id,
+            doctorId: doctor?.doctorId,
+            sessionId: sessionId,
+        };
+
+        startTransition(async () => {
+            try {
+                const res = await createAppointments(appointmentData);
+                console.log(res);
+                if (res?.insertedId) {
+                    const paymentsData = {
+                        paymentId: res?.insertedId,
+                        patientId: user.id,
+                        doctorId: doctor?.doctorId,
+                        doctorName: doctor?.name,
+                        specialization: doctor?.specialization,
+                        patientName: formData.get('patientName'),
+                        consultationFee: doctor?.consultationFee,
+                    }
+                    try {
+                        const res = await createPayments(paymentsData);
+                        if (res) {
+                            console.log(res);
+                        }
+                        else {
+                            // console.log("Failed to submit request")
+                        }
+                    }
+                    catch(err){
+                        // console.log("An error occurred during submission.")
+                    }
+
+                    toast.success("Requested for Appointments Successfully");
+                    router.push("/dashboard/patient/appointments");
+                } else {
+                    toast.error("Failed to submit request.");
+                }
+            } catch (err) {
+                toast.error("An error occurred during submission.");
+            }
+        });
+    };
+
     return (
-        <form action={handleFormSubmit} className="p-6 md:p-8 space-y-6">
+        <form action={clientAction} className="p-6 md:p-8 space-y-6">
             <div className="grid sm:grid-cols-2 gap-5">
                 {/* Patient Name */}
                 <div>
@@ -153,9 +213,10 @@ export default function AppointmentForm({ doctor, user, handleFormSubmit, validA
             {/* Action Submit Button */}
             <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all"
+                disabled={isPending}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-xl shadow-md transition-all"
             >
-                Confirm Booking Parameters
+                {isPending ? "Confirming Booking..." : "Confirm Booking Parameters"}
             </button>
         </form>
     );

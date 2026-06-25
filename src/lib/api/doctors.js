@@ -22,7 +22,6 @@ export const getDoctorData = async (doctorId) => {
 
 // for update personal profile data
 export const updateDoctorData = async (doctorId, updatedData) => {
-
   const res = await fetch(`${baseUrl}/api/doctor/${doctorId}`, {
     method: "PATCH",
     headers: {

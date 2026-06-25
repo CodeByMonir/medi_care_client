@@ -6,8 +6,6 @@ import { FaUserMd, FaChevronLeft, FaHospital, FaStethoscope } from 'react-icons/
 import { getDoctorDetails } from '@/src/lib/api/doctors';
 import AppointmentForm from './AppointmentForm';
 import { stripe } from '@/src/lib/stripe';
-import { toast } from 'react-toastify';
-import { createAppointments } from '@/src/lib/actions/doctors';
 
 function getUpcomingDatesForDays(allowedDays) {
     const dates = [];
@@ -34,7 +32,6 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
     const id = resolvedParams?.id;
     const sessionId = resolvedSearchParams?.session_id;
 
-    // 1. Stripe Validation Requirement Check
     if (!sessionId) {
         return redirect(`/doctors/${id}?error=payment_failed`);
     }
@@ -49,7 +46,6 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
         return redirect(`/doctors/${id}?error=payment_failed`);
     }
 
-    // Redirect to profile if payment setup is open or incomplete
     if (stripeSession.status !== 'complete') {
         return redirect(`/doctors/${id}?error=payment_failed`);
     }
@@ -78,45 +74,6 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
     const operationalDays = doctor.availableSlots?.map(slot => slot.day) || [];
     const validAppointmentDates = getUpcomingDatesForDays(operationalDays);
 
-
-
-    async function handleFormSubmit(formData) {
-        'use server';
-        const appointmentData = {
-            appointmentStatus: "pending",
-            patientName: formData.get('patientName'),
-            patientEmail: formData.get('patientEmail'),
-            doctorName: doctor?.name,
-            specialization: doctor?.specialization,
-            appointmentDate: formData.get('appointmentDate'),
-            appointmentSlot: formData.get('appointmentSlot'),
-            patientGender: formData.get('patientGender'),
-            patientPhone: formData.get('patientPhone'),
-            symptoms: formData.get('symptoms'),
-            patientId: user.id,
-            doctorId: doctor?.doctorId,
-            sessionId: sessionId, // Added Stripe session id to submission data parameters
-        };
-
-
-        try {
-            const res = await createAppointments(appointmentData);
-            if (res?.insertedId) {
-                toast.success("Requested for Appointments Successfully");
-            } else {
-                toast.error("Failed to submit request.");
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error("An error occurred during submission.");
-        } finally {
-            setLoading(false);
-        }
-
-        console.log(data)
-        // redirect('/dashboard/patient/appointments')
-    }
-
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen py-10 px-4 sm:px-6 lg:px-8 text-slate-700 dark:text-slate-300 transition-colors duration-200">
             <div className="max-w-3xl mx-auto space-y-6">
@@ -144,12 +101,12 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
                         </div>
                     </div>
 
-                    {/* Integrated Interactive Form Component */}
                     <AppointmentForm
                         doctor={doctor}
                         user={user}
-                        handleFormSubmit={handleFormSubmit}
+                        sessionId={sessionId}
                         validAppointmentDates={validAppointmentDates}
+                        resolvedParams={resolvedParams}
                     />
                 </div>
             </div>
