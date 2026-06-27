@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteReviewData, getReviewData } from "@/src/lib/api/reviews";
+import { deleteReviewData, getReviewData, updateReviewData } from "@/src/lib/api/reviews";
 import { useSession } from "@/src/lib/auth-client";
 import { useState, useEffect } from "react";
 import {
@@ -104,8 +104,7 @@ export default function MyReviewsPage() {
                 date: today
             };
 
-            // Call your update API route target here:
-            // await updateReviewApi(currentId, updatedPayload);
+            await updateReviewData(currentId, updatedPayload);
 
             setReviews(reviews.map(rev =>
                 (rev._id || rev.id) === currentId
@@ -289,6 +288,7 @@ export default function MyReviewsPage() {
                             <button
                                 type="submit"
                                 disabled={isSaving}
+                                // collect review if from here to 
                                 className="px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition disabled:opacity-75 inline-flex items-center gap-1.5"
                             >
                                 {isSaving ? <FaSpinner className="animate-spin" /> : "Save Changes"}

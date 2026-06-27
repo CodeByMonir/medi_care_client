@@ -56,9 +56,11 @@ export default function AppointmentForm({ doctor, user, sessionId, validAppointm
                         specialization: doctor?.specialization,
                         patientName: formData.get('patientName'),
                         consultationFee: doctor?.consultationFee,
-                        createdAt: new date()
+                        createdAt: new Date(),
                     }
+
                     try {
+                        // console.log(paymentsData)
                         const res = await createPayments(paymentsData);
                         if (res) {
                             // console.log(res);

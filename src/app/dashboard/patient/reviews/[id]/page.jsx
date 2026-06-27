@@ -5,21 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import { getDoctorDetails } from "@/src/lib/api/doctors";
 import { createReviews } from "@/src/lib/api/reviews";
 import { useSession } from "@/src/lib/auth-client";
-// 🔴 REMOVED: getUserSession import since it uses server-only 'next/headers'
+import { toast } from "react-toastify";
 
 export default function GiveReviewPage() {
     const params = useParams();
     const router = useRouter();
     const license = params?.id;
 
-    // 🟢 FIXED: Call the session hook at the top level of the component
     const { data: session } = useSession();
 
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isRedirecting, setIsRedirecting] = useState(false); // 🟢 Tracks the 3s window before route switch
     const [fetchingDoctor, setFetchingDoctor] = useState(true);
-    const [message, setMessage] = useState({ type: "", text: "" });
 
     const [doctorInfo, setDoctorInfo] = useState({ id: null, name: "" });
 
@@ -38,6 +37,7 @@ export default function GiveReviewPage() {
                 }
             } catch (error) {
                 console.error("Failed to load doctor details:", error);
+                toast.error("Failed to fetch doctor details.");
             } finally {
                 setFetchingDoctor(false);
             }
@@ -48,14 +48,13 @@ export default function GiveReviewPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setMessage({ type: "", text: "" });
 
         try {
-            // 🟢 FIXED: Extract user data from the top-level session state
             const patientId = session?.user?.id || session?.id;
+            const patientName = session?.user?.name || session?.name;
 
             if (!patientId) {
-                setMessage({ type: "error", text: "You must be logged in to submit a review." });
+                toast.error("You must be logged in to submit a review.");
                 setLoading(false);
                 return;
             }
@@ -64,32 +63,35 @@ export default function GiveReviewPage() {
                 license: license,
                 patientId: patientId,
                 doctorId: doctorInfo.id,
-                doctorName:doctorInfo.name,
+                doctorName: doctorInfo.name,
+                patientName: patientName,
                 rating,
                 comment,
             };
 
-            console.log("Submitting:", reviewData);
-
             const res = await createReviews(reviewData);
 
             if (res && res.success) {
-                setMessage({ type: "success", text: "Review submitted successfully!" });
+                toast.success("Review submitted successfully!");
                 setComment("");
                 setRating(5);
+                setIsRedirecting(true); // 🟢 Switch to redirecting state
 
                 setTimeout(() => {
                     router.push("/dashboard/patient/reviews");
                 }, 3000);
             } else {
-                setMessage({ type: "error", text: res?.data?.message || "Something went wrong." });
+                toast.error(res?.data?.message || "Something went wrong.");
+                setLoading(false); // 🔴 Only stop loading if there is an error
             }
         } catch (error) {
-            setMessage({ type: "error", text: "Failed to connect to the server." });
-        } finally {
-            setLoading(false);
+            toast.error("Failed to connect to the server.");
+            setLoading(false); // 🔴 Only stop loading if there is an error
         }
     };
+
+    // Form inputs are disabled during both standard loading or final redirecting
+    const isFormDisabled = loading || isRedirecting || fetchingDoctor;
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -105,15 +107,6 @@ export default function GiveReviewPage() {
                     </span>
                 </p>
 
-                {message.text && (
-                    <div className={`p-3 mb-4 rounded-lg text-sm text-center font-medium ${message.type === "success"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}>
-                        {message.text}
-                    </div>
-                )}
-
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Rating Selection */}
                     <div>
@@ -125,9 +118,10 @@ export default function GiveReviewPage() {
                                 <button
                                     key={star}
                                     type="button"
+                                    disabled={isFormDisabled}
                                     onClick={() => setRating(star)}
                                     className={`text-3xl transition-colors duration-150 focus:outline-none ${star <= rating ? "text-amber-400" : "text-gray-300 dark:text-gray-600"
-                                        }`}
+                                        } disabled:opacity-50`}
                                 >
                                     ★
                                 </button>
@@ -144,23 +138,29 @@ export default function GiveReviewPage() {
                             id="comment"
                             rows="4"
                             value={comment}
+                            disabled={isFormDisabled}
                             onChange={(e) => setComment(e.target.value)}
                             required
                             placeholder="Tell us about your experience..."
                             className="w-full px-4 py-3 rounded-xl border transition-all duration-200 outline-none text-sm
                                 bg-gray-50 text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                                dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500 dark:focus:ring-indigo-900/50"
+                                dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500 dark:focus:ring-indigo-900/50
+                                disabled:opacity-60"
                         />
                     </div>
 
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={loading || fetchingDoctor}
+                        disabled={isFormDisabled}
                         className="w-full py-3 px-4 font-semibold text-sm rounded-xl shadow-md transition-all duration-300 transform active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none
                             bg-blue-600 text-white hover:bg-blue-700 dark:bg-indigo-600 dark:hover:bg-indigo-700"
                     >
-                        {loading ? "Submitting..." : "Submit Review"}
+                        {isRedirecting
+                            ? "Success! Redirecting..."
+                            : loading
+                                ? "Submitting..."
+                                : "Submit Review"}
                     </button>
                 </form>
             </div>
