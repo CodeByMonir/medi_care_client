@@ -13,10 +13,10 @@ import {
     FaCheckCircle,
     FaSpinner,
     FaBriefcase,
-    FaDollarSign,
     FaStar,
     FaSortAmountDown,
-    FaSlidersH
+    FaSlidersH,
+    FaChevronLeft
 } from 'react-icons/fa';
 import { getDoctorsData } from '@/src/lib/api/doctors';
 
@@ -32,6 +32,10 @@ export default function DoctorsPage() {
     // Sorting Engine State
     const [sortBy, setSortBy] = useState('none'); // 'none' | 'fee-asc' | 'fee-desc' | 'experience' | 'rating'
 
+    // Pagination State Configuration
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 9;
+
     useEffect(() => {
         async function fetchDoctors() {
             try {
@@ -45,6 +49,11 @@ export default function DoctorsPage() {
         }
         fetchDoctors();
     }, []);
+
+    // Reset back to page 1 when filter variables or layout controls are updated
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchName, searchSpecialization, sortBy]);
 
     // 1. Filter Engine: Checks explicit matches against both keys simultaneously
     const filteredDoctors = doctorsList.filter(doctor => {
@@ -70,11 +79,16 @@ export default function DoctorsPage() {
             return (b.experience || 0) - (a.experience || 0); // Highest experience first
         }
         if (sortBy === 'rating') {
-            // Checks user schema metric `rating` first, fallbacks safely if undefined
             return (b.rating || 0) - (a.rating || 0);
         }
         return 0; // Standard default collection arrangement
     });
+
+    // 3. Pagination Slicing Engine
+    const totalPages = Math.ceil(sortedDoctors.length / itemsPerPage);
+    const indexOfLastDoctor = currentPage * itemsPerPage;
+    const indexOfFirstDoctor = indexOfLastDoctor - itemsPerPage;
+    const currentDoctors = sortedDoctors.slice(indexOfFirstDoctor, indexOfLastDoctor);
 
     if (loading) {
         return (
@@ -180,7 +194,7 @@ export default function DoctorsPage() {
                 {/* VIEW PIPELINE 1: Grid Cards Presentation Mode Layout */}
                 {viewMode === 'grid' && sortedDoctors.length > 0 && (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {sortedDoctors.map((doctor) => (
+                        {currentDoctors.map((doctor) => (
                             <main
                                 key={doctor.license}
                                 className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl shadow-sm p-5 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
@@ -210,7 +224,6 @@ export default function DoctorsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Dynamic Rating Chip Integration */}
                                         <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-[11px] font-black shrink-0">
                                             <FaStar className="text-[10px]" /> {doctor.rating || "4.9"}
                                         </div>
@@ -264,7 +277,7 @@ export default function DoctorsPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                                    {sortedDoctors.map((doctor) => (
+                                    {currentDoctors.map((doctor) => (
                                         <tr key={doctor.license} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
@@ -306,6 +319,54 @@ export default function DoctorsPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* PAGINATION INTERACTION COMPONENT BLOCK */}
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            Showing <span className="font-bold text-slate-800 dark:text-slate-200">{indexOfFirstDoctor + 1}</span> to{" "}
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {Math.min(indexOfLastDoctor, sortedDoctors.length)}
+                            </span>{" "}
+                            of <span className="font-bold text-slate-800 dark:text-slate-200">{sortedDoctors.length}</span> doctors
+                        </p>
+
+                        <div className="inline-flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-400 disabled:opacity-40 disabled:hover:bg-transparent transition text-xs flex items-center gap-1 font-bold"
+                            >
+                                <FaChevronLeft className="text-[10px]" /> Prev
+                            </button>
+
+                            {/* Render numeric page navigation loops safely */}
+                            {[...Array(totalPages)].map((_, i) => {
+                                const pageNumber = i + 1;
+                                return (
+                                    <button
+                                        key={pageNumber}
+                                        onClick={() => setCurrentPage(pageNumber)}
+                                        className={`h-8 w-8 text-xs font-bold rounded-lg transition-all ${currentPage === pageNumber
+                                                ? "bg-blue-600 text-white shadow-sm"
+                                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            }`}
+                                    >
+                                        {pageNumber}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-400 disabled:opacity-40 disabled:hover:bg-transparent transition text-xs flex items-center gap-1 font-bold"
+                            >
+                                Next <FaChevronRight className="text-[10px]" />
+                            </button>
                         </div>
                     </div>
                 )}

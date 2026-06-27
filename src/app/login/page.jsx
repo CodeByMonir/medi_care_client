@@ -2,6 +2,12 @@ import { Suspense } from "react";
 import { LoginForm } from "./LoginForm";
 import { FaSpinner } from "react-icons/fa";
 
+export const metadata = {
+    title: "Log In",
+    description: "Login to access all features",
+};
+
+
 export default function LoginPage() {
     return (
         <Suspense

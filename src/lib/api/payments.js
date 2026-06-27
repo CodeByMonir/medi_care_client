@@ -12,3 +12,10 @@ export const createPayments = async (paymentData) => {
 
   return res.json();
 };
+
+
+// created to get data of payments
+export const getPaymentData = async (sessionId) => {
+  const res = await fetch(`${baseUrl}/api/payments?sessionId=${sessionId}`);
+  return res.json();
+};

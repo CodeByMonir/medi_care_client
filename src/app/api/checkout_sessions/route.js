@@ -14,7 +14,7 @@ export async function POST(request) {
     const license = formData.get('license');
     const payment = formData.get('payment');
 
-    console.log(license, payment) // showing undefine
+    // console.log(license, payment) // showing undefine
 
     const user = await getUserSession();
 

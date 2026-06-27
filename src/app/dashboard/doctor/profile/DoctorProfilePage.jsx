@@ -50,7 +50,7 @@ export default function DoctorProfilePage() {
                 const doctorId = session?.user?.id; // Replace with your dynamic context ID as needed
                 const doctorData = await getDoctorData(doctorId);
 
-                console.log("api data", doctorData)
+                // console.log("api data", doctorData)
 
                 // Handle scenarios where doctorData is missing or empty
                 if (!doctorData || (Array.isArray(doctorData) && doctorData.length === 0)) {

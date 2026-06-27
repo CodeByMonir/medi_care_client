@@ -46,21 +46,22 @@ export default function AppointmentForm({ doctor, user, sessionId, validAppointm
         startTransition(async () => {
             try {
                 const res = await createAppointments(appointmentData);
-                console.log(res);
+                // console.log(res);
                 if (res?.insertedId) {
                     const paymentsData = {
-                        paymentId: res?.insertedId,
+                        appointmentId: res?.insertedId,
                         patientId: user.id,
                         doctorId: doctor?.doctorId,
                         doctorName: doctor?.name,
                         specialization: doctor?.specialization,
                         patientName: formData.get('patientName'),
                         consultationFee: doctor?.consultationFee,
+                        createdAt: new date()
                     }
                     try {
                         const res = await createPayments(paymentsData);
                         if (res) {
-                            console.log(res);
+                            // console.log(res);
                         }
                         else {
                             // console.log("Failed to submit request")

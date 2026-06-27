@@ -1,29 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { deleteReviewData, getReviewData } from "@/src/lib/api/reviews";
+import { useSession } from "@/src/lib/auth-client";
+import { useState, useEffect } from "react";
 import {
     FaStar,
     FaRegStar,
-    FaPlus,
     FaEdit,
     FaTrashAlt,
     FaUserMd,
     FaTimes,
     FaSpinner,
-    FaCommentMedical
+    FaCommentMedical,
+    FaExclamationTriangle
 } from "react-icons/fa";
 
 export default function MyReviewsPage() {
+    const { data: session } = useSession();
+    const sessionId = session?.user?.id;
+
     // Core state tracking array for reviews list
-    const [reviews, setReviews] = useState([
-        { id: 1, doctor: "Dr. Sarah Jenkins", specialty: "Cardiologist", rating: 5, comment: "Extremely attentive and explained my diagnosis clearly. Highly recommend her clinic!", date: "2026-05-14" },
-        { id: 2, doctor: "Dr. Michael Chang", specialty: "Dermatologist", rating: 4, comment: "Great appointment. The prescription worked perfectly within a week, though wait times were long.", date: "2026-02-28" }
-    ]);
+    const [reviews, setReviews] = useState([]);
+    const [isLoadingFetch, setIsLoadingFetch] = useState(true);
 
     // UI Configuration & Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [editingReview, setEditingReview] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Form inputs states
     const [doctorName, setDoctorName] = useState("");
@@ -32,66 +38,87 @@ export default function MyReviewsPage() {
     const [comment, setComment] = useState("");
     const [hoveredRating, setHoveredRating] = useState(null);
 
-    // CRUD: Open Dialog for Creating a new review
-    const openCreateModal = () => {
-        setEditingReview(null);
-        setDoctorName("");
-        setSpecialty("");
-        setRating(5);
-        setComment("");
-        setIsModalOpen(true);
-    };
+    // Fetch review records from API accurately on client load
+    useEffect(() => {
+        async function loadReviews() {
+            if (!sessionId) return;
+            try {
+                setIsLoadingFetch(true);
+                const apiData = await getReviewData(sessionId);
+                setReviews(Array.isArray(apiData) ? apiData : apiData?.data || []);
+            } catch (err) {
+                console.error("Failed loading patient reviews:", err);
+            } finally {
+                setIsLoadingFetch(false);
+            }
+        }
+        loadReviews();
+    }, [sessionId]);
 
     // CRUD: Open Dialog for Updating an existing review
     const openEditModal = (review) => {
         setEditingReview(review);
-        setDoctorName(review.doctor);
-        setSpecialty(review.specialty);
-        setRating(review.rating);
-        setComment(review.comment);
+        setDoctorName(review.doctor || review.doctorName || "");
+        setSpecialty(review.specialty || "");
+        setRating(review.rating || 5);
+        setComment(review.comment || "");
         setIsModalOpen(true);
     };
 
-    // CRUD: Delete Action
-    const handleDelete = (id) => {
-        if (confirm("Are you sure you want to remove this public provider review? This choice is permanent.")) {
-            setReviews(reviews.filter(rev => rev.id !== id));
+    // CRUD: Trigger Delete Modal Setup
+    const openDeleteModal = (id) => {
+        setDeletingId(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    // CRUD: Confirmed Delete Action
+    const handleConfirmDelete = async () => {
+        if (!deletingId) return;
+        setIsDeleting(true);
+        try {
+            await deleteReviewData(deletingId);
+            setReviews(reviews.filter(rev => (rev._id || rev.id) !== deletingId));
+            setIsDeleteModalOpen(false);
+            setDeletingId(null);
+        } catch (err) {
+            console.error("Delete operation unsuccessful:", err);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
-    // CRUD: Submit Form (Handles both Add & Update operations)
-    const handleFormSubmit = (e) => {
+    // CRUD: Submit Form (Handles Update operations exclusively)
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
-        if (!doctorName || !comment) return;
+        if (!comment) return;
 
         setIsSaving(true);
 
-        setTimeout(() => {
+        try {
             const today = new Date().toISOString().split("T")[0];
+            const currentId = editingReview._id || editingReview.id;
 
-            if (editingReview) {
-                // UPDATE branch
-                setReviews(reviews.map(rev =>
-                    rev.id === editingReview.id
-                        ? { ...rev, doctor: doctorName, specialty, rating, comment, date: today }
-                        : rev
-                ));
-            } else {
-                // CREATE branch
-                const newReview = {
-                    id: Date.now(),
-                    doctor: doctorName,
-                    specialty: specialty || "General Practitioner",
-                    rating,
-                    comment,
-                    date: today
-                };
-                setReviews([newReview, ...reviews]);
-            }
+            const updatedPayload = {
+                rating,
+                comment,
+                date: today
+            };
 
-            setIsSaving(false);
+            // Call your update API route target here:
+            // await updateReviewApi(currentId, updatedPayload);
+
+            setReviews(reviews.map(rev =>
+                (rev._id || rev.id) === currentId
+                    ? { ...rev, ...updatedPayload }
+                    : rev
+            ));
+
             setIsModalOpen(false);
-        }, 600);
+        } catch (error) {
+            console.error("Failed saving adjustments:", error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Star Rating Helper Renderer Function
@@ -123,7 +150,6 @@ export default function MyReviewsPage() {
     };
 
     return (
-        /* FIXED WRAPPER: Changed to a standard block element container centered using mx-auto and max-width */
         <div className="max-w-5xl mx-auto px-4 py-6 w-full space-y-6 animate-fade-in">
 
             {/* Header layout controls block */}
@@ -131,68 +157,65 @@ export default function MyReviewsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Reviews</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Share feedback or modify ratings regarding your consultations and provider treatments.
+                        Modify historical ratings or text descriptions regarding your consultation treatments.
                     </p>
                 </div>
-
-                {/* CREATE operational button trigger */}
-                <button
-                    onClick={openCreateModal}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition shrink-0"
-                >
-                    <FaPlus className="text-xs" />
-                    Write a Review
-                </button>
             </div>
 
-            {/* REVIEWS GRID CARDS (READ & OPERATION WRAPPERS) */}
-            {reviews.length > 0 ? (
+            {/* Main view state switcher mapping */}
+            {isLoadingFetch ? (
+                <div className="flex justify-center items-center py-12">
+                    <FaSpinner className="animate-spin text-3xl text-blue-600" />
+                </div>
+            ) : reviews.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {reviews.map((rev) => (
-                        <div key={rev.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-between space-y-4">
-                            <div className="space-y-3">
-                                {/* Provider header signature snippet */}
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                            <FaUserMd className="text-sm" />
+                    {reviews.map((rev) => {
+                        const uniqueId = rev._id || rev.id;
+                        return (
+                            <div key={uniqueId} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex flex-col justify-between space-y-4">
+                                <div className="space-y-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                <FaUserMd className="text-sm" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight">
+                                                    {rev.doctor || rev.doctorName || "Medical Practitioner"}
+                                                </h4>
+                                                {rev.specialty && <p className="text-xs text-slate-400 mt-0.5">{rev.specialty}</p>}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-tight">{rev.doctor}</h4>
-                                            <p className="text-xs text-slate-400 mt-0.5">{rev.specialty}</p>
-                                        </div>
+                                        <span className="text-[11px] font-medium text-slate-400 whitespace-nowrap">{rev.date || "Recent"}</span>
                                     </div>
-                                    <span className="text-[11px] font-medium text-slate-400 whitespace-nowrap">{rev.date}</span>
+
+                                    <div>{renderStars(rev.rating)}</div>
+
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-4 leading-relaxed italic">
+                                        "{rev.comment}"
+                                    </p>
                                 </div>
 
-                                {/* Star Score Rating display array */}
-                                <div>{renderStars(rev.rating)}</div>
-
-                                {/* Comment text block content line */}
-                                <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-4 leading-relaxed italic">
-                                    "{rev.comment}"
-                                </p>
+                                {/* UPDATE & DELETE Management Row */}
+                                <div className="flex justify-end items-center gap-1.5 border-t dark:border-slate-800/60 pt-3 mt-1">
+                                    <button
+                                        onClick={() => openEditModal(rev)}
+                                        className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition inline-flex items-center gap-1 text-xs font-medium"
+                                        title="Modify Review Content"
+                                    >
+                                        <FaEdit className="text-xs" /> Edit
+                                    </button>
+                                    <button
+                                        onClick={() => openDeleteModal(uniqueId)}
+                                        className="p-2 text-slate-500 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition inline-flex items-center gap-1 text-xs font-medium"
+                                        title="Delete Review"
+                                    >
+                                        <FaTrashAlt className="text-xs" /> Remove
+                                    </button>
+                                </div>
                             </div>
-
-                            {/* UPDATE & DELETE Management Row */}
-                            <div className="flex justify-end items-center gap-1.5 border-t dark:border-slate-800/60 pt-3 mt-1">
-                                <button
-                                    onClick={() => openEditModal(rev)}
-                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition inline-flex items-center gap-1 text-xs font-medium"
-                                    title="Edit Review Content"
-                                >
-                                    <FaEdit className="text-xs" /> Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(rev.id)}
-                                    className="p-2 text-slate-500 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition inline-flex items-center gap-1 text-xs font-medium"
-                                    title="Delete Review"
-                                >
-                                    <FaTrashAlt className="text-xs" /> Remove
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 max-w-xl mx-auto">
@@ -204,12 +227,11 @@ export default function MyReviewsPage() {
                 </div>
             )}
 
-            {/* DIALOG BOX CONTAINER FOR ADD & EDIT MODAL SUBMISSIONS */}
+            {/* DIALOG BOX CONTAINER FOR EDIT MODAL SUBMISSIONS */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <form onSubmit={handleFormSubmit} className="bg-white dark:bg-slate-900 border dark:border-slate-800 max-w-md w-full rounded-2xl p-6 shadow-2xl relative animate-scale-up space-y-4">
+                    <form onSubmit={handleFormSubmit} className="bg-white dark:bg-slate-900 border dark:border-slate-800 max-w-md w-full rounded-2xl p-6 shadow-2xl relative space-y-4">
 
-                        {/* Close window overlay cross wire button */}
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
@@ -220,37 +242,23 @@ export default function MyReviewsPage() {
 
                         <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
                             <FaCommentMedical className="text-blue-600" />
-                            {editingReview ? "Modify Review Entry" : "Write a New Review"}
+                            Modify Review Entry
                         </h3>
 
-                        {/* Provider Practitioner Target Entry */}
+                        {/* Read-Only Information Presentation */}
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Doctor Name</label>
                             <input
                                 type="text"
-                                required
-                                placeholder="e.g. Dr. Jane Doe"
+                                disabled
                                 value={doctorName}
-                                onChange={(e) => setDoctorName(e.target.value)}
-                                className="w-full text-sm bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl border p-2.5 border-slate-300 dark:border-slate-700 outline-none transition focus:border-blue-600"
-                            />
-                        </div>
-
-                        {/* Specialist Department Subtag */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Medical Specialty</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Neurologist, Dentist"
-                                value={specialty}
-                                onChange={(e) => setSpecialty(e.target.value)}
-                                className="w-full text-sm bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl border p-2.5 border-slate-300 dark:border-slate-700 outline-none transition focus:border-blue-600"
+                                className="w-full text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl border p-2.5 border-slate-200 dark:border-slate-700 outline-none cursor-not-allowed"
                             />
                         </div>
 
                         {/* Interactive Star Rank Selection */}
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Your Rating Score</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Update Rating Score</label>
                             <div className="p-1 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 inline-block">
                                 {renderStars(rating, true)}
                             </div>
@@ -262,7 +270,7 @@ export default function MyReviewsPage() {
                             <textarea
                                 required
                                 rows="4"
-                                placeholder="Share details of your clinical visit experience, communication style, or treatment satisfaction..."
+                                placeholder="Share details of your clinical visit experience..."
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 className="w-full text-sm bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl border p-2.5 border-slate-300 dark:border-slate-700 outline-none resize-none transition focus:border-blue-600"
@@ -283,10 +291,53 @@ export default function MyReviewsPage() {
                                 disabled={isSaving}
                                 className="px-5 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition disabled:opacity-75 inline-flex items-center gap-1.5"
                             >
-                                {isSaving ? <FaSpinner className="animate-spin" /> : "Publish Feedback"}
+                                {isSaving ? <FaSpinner className="animate-spin" /> : "Save Changes"}
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* CUSTOM MODAL FOR DELETE CONFIRMATION */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 max-w-sm w-full rounded-2xl p-6 shadow-2xl relative text-center space-y-4 animate-scale-up">
+
+                        <div className="mx-auto h-12 w-12 bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center rounded-full">
+                            <FaExclamationTriangle className="text-xl" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                                Remove Public Review?
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Are you sure you want to delete this provider review? This action is permanent and cannot be undone.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2 justify-center pt-2">
+                            <button
+                                type="button"
+                                disabled={isDeleting}
+                                onClick={() => {
+                                    setIsDeleteModalOpen(false);
+                                    setDeletingId(null);
+                                }}
+                                className="w-full px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isDeleting}
+                                onClick={handleConfirmDelete}
+                                className="w-full px-4 py-2 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 rounded-xl shadow-md transition disabled:opacity-75 flex items-center justify-center gap-1.5"
+                            >
+                                {isDeleting ? <FaSpinner className="animate-spin" /> : "Delete"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

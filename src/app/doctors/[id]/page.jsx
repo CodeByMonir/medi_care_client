@@ -122,26 +122,38 @@ export default async function DoctorDetailsPage({ params }) {
                                     </div>
 
                                     <div className="flex-1 space-y-4 text-center md:text-left w-full">
-                                        <div className="space-y-1.5">
-                                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                                                <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-                                                    {doctor.name}
-                                                </h1>
-                                                {/* Hidden doctorId and showing license here */}
-                                                {doctor.license && (
-                                                    <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/60 uppercase tracking-wider">
-                                                        Lic: {doctor.license}
-                                                    </span>
-                                                )}
-                                            </div>
+                                        <div className="flex-1 space-y-4 text-center md:text-left w-full">
+                                            <div className="flex justify-between space-y-1.5">
+                                                <div>
+                                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                                                        <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+                                                            {doctor.name}
+                                                        </h1>
+                                                        {/* Hidden doctorId and showing license here */}
+                                                        {doctor.license && (
+                                                            <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/60 uppercase tracking-wider">
+                                                                Lic: {doctor.license}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs">
-                                                <p className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                                    <FaStethoscope /> {doctor.specialization}
-                                                </p>
-                                                <span className="text-slate-300 dark:text-slate-700">|</span>
-                                                <div className="flex items-center gap-1 font-bold text-amber-500">
-                                                    <FaStar /> {doctor.rating || "4.9"} (Verified Feedback)
+                                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs">
+                                                        <p className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                                            <FaStethoscope /> {doctor.specialization}
+                                                        </p>
+                                                        <span className="text-slate-300 dark:text-slate-700">|</span>
+                                                        <div className="flex items-center gap-1 font-bold text-amber-500">
+                                                            <FaStar /> {doctor.rating || "4.9"} (Verified Feedback)
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                                                    <Link href={`/dashboard/patient/reviews/${doctor?.license}`}>
+                                                        <button className="px-6 py-3 font-semibold text-sm rounded-lg shadow-md transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 dark:focus:ring-indigo-400 dark:focus:ring-offset-gray-900"
+                                                        >
+                                                            Give A Review
+                                                        </button>
+                                                    </Link>
                                                 </div>
                                             </div>
                                         </div>

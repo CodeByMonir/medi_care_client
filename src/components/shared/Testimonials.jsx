@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { FaStar, FaQuoteLeft } from "react-icons/fa";
 
 export default function Testimonials() {
@@ -25,12 +28,39 @@ export default function Testimonials() {
         }
     ];
 
+    // Parent container variant triggers orchestrated delays for children cards
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.15
+            }
+        }
+    };
+
+    // Child item variant for individual card entries
+    const cardVariants = {
+        hidden: { opacity: 0, y: 30 },
+        show: {
+            opacity: 1,
+            y: 0,
+            transition: { type: "spring", stiffness: 80, damping: 15 }
+        }
+    };
+
     return (
-        <section className="bg-white py-16 sm:py-24 dark:bg-slate-950 transition-colors duration-200">
+        <section className="bg-white py-16 sm:py-24 dark:bg-slate-950 transition-colors duration-200 overflow-hidden">
             <div className="container mx-auto px-4">
 
                 {/* Section Header */}
-                <div className="mx-auto max-w-3xl text-center mb-16">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="mx-auto max-w-3xl text-center mb-16"
+                >
                     <span className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                         Patient Stories
                     </span>
@@ -40,14 +70,25 @@ export default function Testimonials() {
                     <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">
                         Read how our integrated healthcare platform is transforming the medical experience with immediate, secure, and expert support.
                     </p>
-                </div>
+                </motion.div>
 
-                {/* Testimonials Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Animated Testimonials Grid */}
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+                >
                     {reviews.map((item, index) => (
-                        <div
+                        <motion.div
                             key={index}
-                            className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/50 p-8 shadow-sm transition-all duration-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                            variants={cardVariants}
+                            whileHover={{
+                                y: -6,
+                                boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)"
+                            }}
+                            className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/50 p-8 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900"
                         >
                             {/* Decorative Quote Icon */}
                             <FaQuoteLeft className="absolute top-6 right-8 text-3xl text-slate-200 dark:text-slate-800 pointer-events-none" />
@@ -68,7 +109,9 @@ export default function Testimonials() {
 
                             {/* User Profile Footer */}
                             <div className="mt-8 flex items-center gap-4 border-t border-slate-200/60 pt-6 dark:border-slate-800/80">
-                                <img
+                                <motion.img
+                                    whileHover={{ scale: 1.08 }}
+                                    transition={{ duration: 0.2 }}
                                     src={item.image}
                                     alt={`${item.name} profile portrait`}
                                     className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20"
@@ -84,9 +127,9 @@ export default function Testimonials() {
                                 </div>
                             </div>
 
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
 
             </div>
         </section>
