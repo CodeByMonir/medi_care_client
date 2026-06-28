@@ -19,7 +19,6 @@ const DashboardPage = async () => {
     const doctorData = await getDoctorsData();
 
     return (
-        /* ডার্ক মোডের জন্য bg-slate-950 বা bg-gray-950 ব্যবহার করা হয়েছে */
         <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-200">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -32,7 +31,6 @@ const DashboardPage = async () => {
                 {/* Sidebar Area */}
                 <div className="space-y-6">
                     <TotalPayments paymentData={paymentData} appointmentData={appointmentData} />
-                    {/* এখানে আপনার ফিল্টারিং লজিক লাগলে appointmentData prop-টি পাস করে দিতে পারেন */}
                     <FavoriteDoctors doctorData={doctorData} />
                 </div>
 

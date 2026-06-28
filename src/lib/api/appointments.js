@@ -23,6 +23,13 @@ export const getAppointmentsData = async (sessionId) => {
 }
 
 
+// created to get appointment data by session id
+export const getAppointmentData = async (id) => {
+  const res = await fetch(`${baseUrl}/api/appointments/${id}`);
+  return res.json();
+}
+
+
 // update appointments data by session id
 export const updateAppointmentData = async (_id, updatedData) => {
   const res = await fetch(`${baseUrl}/api/appointments?_id=${_id}`, {

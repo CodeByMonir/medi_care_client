@@ -32,7 +32,8 @@ export default function GiveReviewPage() {
                 if (doctor) {
                     setDoctorInfo({
                         id: doctor?._id || doctor?.id,
-                        name: doctor?.name || "Unknown Doctor"
+                        name: doctor?.name || "Unknown Doctor",
+                        doctorId: doctor?.doctorId,
                     });
                 }
             } catch (error) {
@@ -62,7 +63,7 @@ export default function GiveReviewPage() {
             const reviewData = {
                 license: license,
                 patientId: patientId,
-                doctorId: doctorInfo.id,
+                doctorId: doctorInfo.doctorId,
                 doctorName: doctorInfo.name,
                 patientName: patientName,
                 rating,

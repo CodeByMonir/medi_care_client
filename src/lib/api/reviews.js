@@ -18,8 +18,8 @@ export const createReviews = async (reviewData) => {
 };
 
 
-export const getReviewData = async (_id) => {
-  const res = await fetch(`${baseUrl}/api/reviews?_id=${_id}`);
+export const getReviewData = async (sessionId) => {
+  const res = await fetch(`${baseUrl}/api/reviews?sessionId=${sessionId}`);
   return res.json();
 }
 
