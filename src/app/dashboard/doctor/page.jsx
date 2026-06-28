@@ -20,6 +20,7 @@ const HomePage = async () => {
         getPaymentData(sessionId).then(res => res || []),
         getReviewData(sessionId).then(res => res || [])
     ]);
+    // console.log("datas", sessionId, "reviews", reviewData)
 
     // 1. Total Patients Count
     const totalPatientsCount = appointmentData.length;
@@ -33,6 +34,7 @@ const HomePage = async () => {
 
     // 3. Total Reviews Count
     const totalReviewsCount = reviewData.length;
+    console.log(totalReviewsCount)
 
     // Bundle metrics configuration dynamically into the layout schema array
     const metricsConfig = [
@@ -60,7 +62,7 @@ const HomePage = async () => {
     ];
 
     return (
-        <div className="p-6 space-y-8">
+        <div className="min-h-screen p-6 pb-12 space-y-8">
             <DashboardHeader title="Doctor Dashboard" />
 
             {/* Displaying your dynamic totals through the metrics component */}
@@ -69,7 +71,7 @@ const HomePage = async () => {
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
                     <UpcomingAppointments appointments={appointmentData} />
-                    <AppointmentHistory history={appointmentData} />
+                    {/* <AppointmentHistory history={appointmentData} /> */}
                 </div>
 
                 <div className="space-y-6">

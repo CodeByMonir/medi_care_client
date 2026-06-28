@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 
 const DashboardLayout = async ({ children }) => {
     return (
-        <div className=" flex min-h-screen">
+        <div className=" flex min-h-screen h-full">
             <div className='flex-1'>{children}</div>
             <DashboardSidebar />
             <ToastContainer />

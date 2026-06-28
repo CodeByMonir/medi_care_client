@@ -1,281 +1,177 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { getUserData } from '@/src/lib/api/patients';
+import { getUserSession } from '@/src/lib/core/session';
+import { redirect } from 'next/navigation';
+import React from 'react';
 import {
     FaUser,
-    FaEnvelope,
     FaIdCard,
     FaPhone,
     FaMapMarkerAlt,
     FaTint,
     FaWeight,
     FaRulerVertical,
-    FaSave,
-    FaSpinner,
-    FaCheckCircle
+    FaVenusMars,
+    FaShieldAlt
 } from "react-icons/fa";
-import { authClient } from "@/src/lib/auth-client";
 
-export default function PatientProfilePage() {
-    const { data: session, isPending } = authClient.useSession();
+const Homepage = async () => {
+    const user = await getUserSession();
+    const sessionId = user?.id;
 
-    // Form and state management
-    const [loading, setLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
-    const [formData, setFormData] = useState({
-        phone: "",
-        address: "",
-        bloodGroup: "O+",
-        weight: "",
-        height: ""
-    });
+    const userData = await getUserData(sessionId);
 
-    // Populate profile mock data or fetched database attributes if available
-    useEffect(() => {
-        if (session?.user) {
-            // Pre-populate with mock health records for presentation
-            setFormData({
-                phone: "+1 (555) 234-5678",
-                address: "123 Healthwood Drive, New York, NY",
-                bloodGroup: "A+",
-                weight: "72",
-                height: "178"
-            });
-        }
-    }, [session]);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleProfileUpdate = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setSuccessMessage("");
-
-        // Simulate API endpoint connection latency
-        setTimeout(() => {
-            setLoading(false);
-            setSuccessMessage("Your profile information has been successfully saved!");
-
-            // Auto-clear success state banner
-            setTimeout(() => setSuccessMessage(""), 4000);
-        }, 1200);
-    };
-
-    if (isPending) {
-        return (
-            <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2 text-slate-500">
-                <FaSpinner className="animate-spin text-2xl text-blue-600" />
-                <p className="text-sm font-medium">Loading session attributes...</p>
-            </div>
-        );
+    // If userData does not exist, trigger a clean server-side redirect to verification page
+    if (!userData) {
+        redirect("/dashboard/patient/profile/verify");
     }
 
+    const {
+        name,
+        image,
+        patientId,
+        role,
+        gender,
+        phone,
+        address,
+        bloodGroup,
+        weight,
+        height
+    } = userData;
+
     return (
-        <div className="flex justify-center">
-            <div className="max-w-3xl space-y-6 animate-fade-in py-10">
-                {/* Header Description */}
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Profile</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Manage your personal information, core contact channels, and vitals.
-                    </p>
+        <div className="flex justify-center bg-slate-50 min-h-screen dark:bg-slate-950">
+            <div className="max-w-4xl w-full space-y-6 animate-fade-in py-10 px-4 md:px-0">
+
+                {/* HEADER HERO SECTION (WITH LARGER PROFILE PHOTO) */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-center sm:text-left">
+                    {/* Increased Avatar Size from w-16 h-16 to w-32 h-32 */}
+                    <div className="shrink-0">
+                        {image ? (
+                            <img
+                                src={image}
+                                alt={name}
+                                className="w-32 h-32 rounded-2xl object-cover ring-4 ring-blue-500/10 border border-slate-200 dark:border-slate-700 shadow-sm"
+                            />
+                        ) : (
+                            <div className="w-32 h-32 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 ring-4 ring-blue-500/5 border border-dashed border-blue-200 dark:border-blue-900/50">
+                                <FaUser className="text-5xl" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* User Info Alignment */}
+                    <div className="flex-1 space-y-2 pt-2">
+                        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                            {name || "Patient Member"}
+                        </h1>
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                            <span className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 shadow-2sub">
+                                <FaShieldAlt className="text-[10px]" /> {role || "Patient"}
+                            </span>
+                            <span className="text-xs font-mono font-medium text-slate-400 bg-slate-50 dark:bg-slate-950 dark:text-slate-500 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-900/60">
+                                ID: {patientId || sessionId}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Success Alert Banner */}
-                {successMessage && (
-                    <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/20">
-                        <FaCheckCircle className="shrink-0" />
-                        <span>{successMessage}</span>
-                    </div>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                {/* Main Form Body Container */}
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                    {/* LEFT COLUMN: CONTACT & ACCOUNT OVERVIEW */}
+                    <div className="md:col-span-1 space-y-6">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                Contact Information
+                            </h3>
 
-                    {/* SECTION 1: AUTH INTEGRATION DATA (READ-ONLY) */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Account Identity (Verified)</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Name display */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Full Name</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaUser className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        disabled
-                                        value={session?.user?.name || ""}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50 pl-9 pr-4 py-2.5 text-sm text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed"
-                                    />
-                                </div>
+                            {/* Phone Element */}
+                            <div className="space-y-1">
+                                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                                    <FaPhone /> PHONE NUMBER
+                                </span>
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    {phone || "Not provided"}
+                                </p>
                             </div>
 
-                            {/* Email display */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Email Address</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaEnvelope className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="email"
-                                        disabled
-                                        value={session?.user?.email || ""}
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50 pl-9 pr-4 py-2.5 text-sm text-slate-500 dark:text-slate-400 outline-none cursor-not-allowed"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                            <hr className="border-slate-100 dark:border-slate-800" />
 
-                        {/* Meta Account Identifier */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Patient ID String Reference</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                    <FaIdCard className="text-xs" />
-                                </div>
-                                <input
-                                    type="text"
-                                    disabled
-                                    value={session?.user?.id || ""}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50 pl-9 pr-4 py-2.5 text-xs font-mono text-slate-400 outline-none select-all cursor-not-allowed"
-                                />
+                            {/* Address Element */}
+                            <div className="space-y-1">
+                                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                                    <FaMapMarkerAlt /> RESIDENTIAL ADDRESS
+                                </span>
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                                    {address || "Not provided"}
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* SECTION 2: EDITABLE CONTACT METRICS */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Contact Details</h3>
+                    {/* RIGHT COLUMN: HEALTH CARD METRICS */}
+                    <div className="md:col-span-2 space-y-4">
+                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
+                            Medical Metrics & Vitals
+                        </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Phone input */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Phone Number</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaPhone className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                    />
+                        <div className="grid grid-cols-2 gap-4">
+
+                            {/* Gender Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                                <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl text-purple-600 dark:text-purple-400">
+                                    <FaVenusMars className="text-lg" />
+                                </div>
+                                <div>
+                                    <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Gender</span>
+                                    <span className="text-base font-bold text-slate-800 dark:text-slate-200">{gender || "—"}</span>
                                 </div>
                             </div>
 
-                            {/* Address input */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Residential Address</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaMapMarkerAlt className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                    />
+                            {/* Blood Type Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-rose-600 dark:text-rose-400">
+                                    <FaTint className="text-lg" />
+                                </div>
+                                <div>
+                                    <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Blood Group</span>
+                                    <span className="text-base font-bold text-slate-800 dark:text-slate-200">{bloodGroup || "—"}</span>
                                 </div>
                             </div>
+
+                            {/* Weight Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl text-amber-600 dark:text-amber-400">
+                                    <FaWeight className="text-lg" />
+                                </div>
+                                <div>
+                                    <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Weight</span>
+                                    <span className="text-base font-bold text-slate-800 dark:text-slate-200">
+                                        {weight ? `${weight} kg` : "—"}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Height Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                                <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-emerald-600 dark:text-emerald-400">
+                                    <FaRulerVertical className="text-lg" />
+                                </div>
+                                <div>
+                                    <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">Height</span>
+                                    <span className="text-base font-bold text-slate-800 dark:text-slate-200">
+                                        {height ? `${height} cm` : "—"}
+                                    </span>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    {/* SECTION 3: VITAL HEALTH SUMMARY CARDS */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Medical Metrics & Vitals</h3>
+                </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {/* Blood Type Selection */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Blood Type</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-rose-500 pointer-events-none">
-                                        <FaTint className="text-xs" />
-                                    </div>
-                                    <select
-                                        name="bloodGroup"
-                                        value={formData.bloodGroup}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600 appearance-none"
-                                    >
-                                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Weight input */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Weight (kg)</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaWeight className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="number"
-                                        name="weight"
-                                        value={formData.weight}
-                                        onChange={handleChange}
-                                        placeholder="e.g. 70"
-                                        className="w-full rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Height input */}
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Height (cm)</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                        <FaRulerVertical className="text-xs" />
-                                    </div>
-                                    <input
-                                        type="number"
-                                        name="height"
-                                        value={formData.height}
-                                        onChange={handleChange}
-                                        placeholder="e.g. 175"
-                                        className="w-full rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* FORM CONTROLS FOOTER */}
-                    <div className="flex justify-end pt-2">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition disabled:opacity-75"
-                        >
-                            {loading ? (
-                                <>
-                                    <FaSpinner className="animate-spin text-sm" />
-                                    Saving adjustments...
-                                </>
-                            ) : (
-                                <>
-                                    <FaSave className="text-sm" />
-                                    Save Profile Changes
-                                </>
-                            )}
-                        </button>
-                    </div>
-
-                </form>
             </div>
         </div>
     );
-}
+};
+
+export default Homepage;
