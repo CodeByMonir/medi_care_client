@@ -12,8 +12,7 @@ export const createUserdata = async (userData) => {
   return res.json();
 };
 
-
 export const getUserData = async (sessionId) => {
-    const res = await fetch(`${baseUrl}/api/users?sessionId=${sessionId}`)
-    return res.json();
-}
+  const res = await fetch(`${baseUrl}/api/users?sessionId=${sessionId}`);
+  return res.json();
+};
