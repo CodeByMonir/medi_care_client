@@ -1,6 +1,5 @@
 import { getPatientsData } from '@/src/lib/api/admin';
 import UserTable from './UserTable';
-import React from 'react';
 
 const HomePage = async () => {
     
