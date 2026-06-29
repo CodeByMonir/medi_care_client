@@ -1,45 +1,54 @@
 "use client";
 
+import { getAllReviewData } from "@/src/lib/api/admin";
 import { motion } from "framer-motion";
-import { FaStar, FaQuoteLeft } from "react-icons/fa";
+import React, { useEffect, useState } from 'react';
+import { FaStar, FaQuoteLeft, FaSpinner, FaUser } from "react-icons/fa";
 
 export default function Testimonials() {
-    const reviews = [
-        {
-            name: "Sarah Jenkins",
-            role: "Cardiology Patient",
-            image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120&h=120",
-            rating: 5,
-            quote: "Finding a reliable specialist used to take weeks. Through MediCare Connect, I booked an appointment with a top cardiologist within 48 hours. The video consultation went smoothly, and the digital prescription was sent instantly to my pharmacy."
-        },
-        {
-            name: "David Chen",
-            role: "Parent of Pediatric Patient",
-            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120",
-            rating: 5,
-            quote: "As a busy parent, the 24/7 care chat is a lifesaver. I was able to consult a verified pediatrician at 11 PM regarding my son's sudden fever. The advice was clear, reassuring, and completely saved us an anxious midnight trip to the ER."
-        },
-        {
-            name: "Elena Rostova",
-            role: "Dental Care Patient",
-            image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120",
-            rating: 5,
-            quote: "The interface is extraordinarily clean. I love having my medical history and encrypted reports all saved securely under one private dashboard. Booking dental cleanings and tracking follow-ups is incredibly automated now."
-        }
-    ];
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    // Track broken image states by mapping index or unique ID to boolean flags
+    const [brokenImages, setBrokenImages] = useState({});
 
-    // Parent container variant triggers orchestrated delays for children cards
+    // Fetch dynamic data from API on component mount
+    useEffect(() => {
+        async function fetchReviews() {
+            try {
+                const apiData = await getAllReviewData();
+
+                if (Array.isArray(apiData)) {
+                    // Filter by ratings (Only include 4 and 5-star reviews) and limit to 6
+                    const filteredAndLimited = apiData
+                        .filter(review => review.rating >= 4)
+                        .slice(0, 6);
+
+                    setReviews(filteredAndLimited);
+                }
+            } catch (error) {
+                console.error("Failed to load testimonials:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchReviews();
+    }, []);
+
+    const handleImageError = (idOrIndex) => {
+        setBrokenImages(prev => ({ ...prev, [idOrIndex]: true }));
+    };
+
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.15
+                staggerChildren: 0.12
             }
         }
     };
 
-    // Child item variant for individual card entries
     const cardVariants = {
         hidden: { opacity: 0, y: 30 },
         show: {
@@ -72,64 +81,95 @@ export default function Testimonials() {
                     </p>
                 </motion.div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500 dark:text-slate-400">
+                        <FaSpinner className="animate-spin text-3xl text-blue-600" />
+                        <p className="text-sm">Loading authentic patient reviews...</p>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {!loading && reviews.length === 0 && (
+                    <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                        <p className="text-slate-500 dark:text-slate-400">No high-rated testimonials available right now.</p>
+                    </div>
+                )}
+
                 {/* Animated Testimonials Grid */}
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-100px" }}
-                    className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-                >
-                    {reviews.map((item, index) => (
-                        <motion.div
-                            key={index}
-                            variants={cardVariants}
-                            whileHover={{
-                                y: -6,
-                                boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)"
-                            }}
-                            className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/50 p-8 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900"
-                        >
-                            {/* Decorative Quote Icon */}
-                            <FaQuoteLeft className="absolute top-6 right-8 text-3xl text-slate-200 dark:text-slate-800 pointer-events-none" />
+                {!loading && reviews.length > 0 && (
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={{ once: true, margin: "-100px" }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    >
+                        {reviews.map((item, index) => {
+                            const uniqueKey = item._id || index;
+                            const isImageBroken = brokenImages[uniqueKey] || !item.patientImg;
 
-                            <div>
-                                {/* Stars Row */}
-                                <div className="flex items-center gap-1 text-amber-400 mb-5">
-                                    {[...Array(item.rating)].map((_, i) => (
-                                        <FaStar key={i} className="text-sm" />
-                                    ))}
-                                </div>
+                            return (
+                                <motion.div
+                                    key={uniqueKey}
+                                    variants={cardVariants}
+                                    whileHover={{
+                                        y: -6,
+                                        boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)"
+                                    }}
+                                    className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/50 p-8 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900"
+                                >
+                                    <FaQuoteLeft className="absolute top-6 right-8 text-3xl text-slate-200 dark:text-slate-800 pointer-events-none" />
 
-                                {/* Review Text */}
-                                <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300 italic">
-                                    "{item.quote}"
-                                </p>
-                            </div>
+                                    <div>
+                                        {/* Stars Row */}
+                                        <div className="flex items-center gap-1 text-amber-400 mb-5">
+                                            {[...Array(Number(item.rating) || 5)].map((_, i) => (
+                                                <FaStar key={i} className="text-sm" />
+                                            ))}
+                                        </div>
 
-                            {/* User Profile Footer */}
-                            <div className="mt-8 flex items-center gap-4 border-t border-slate-200/60 pt-6 dark:border-slate-800/80">
-                                <motion.img
-                                    whileHover={{ scale: 1.08 }}
-                                    transition={{ duration: 0.2 }}
-                                    src={item.image}
-                                    alt={`${item.name} profile portrait`}
-                                    className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20"
-                                    loading="lazy"
-                                />
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                                        {item.name}
-                                    </h3>
-                                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                        {item.role}
-                                    </p>
-                                </div>
-                            </div>
+                                        {/* Review Text */}
+                                        <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300 italic">
+                                            "{item.comment || "No comment provided."}"
+                                        </p>
+                                    </div>
 
-                        </motion.div>
-                    ))}
-                </motion.div>
+                                    {/* User Profile Footer */}
+                                    <div className="mt-8 flex items-center gap-4 border-t border-slate-200/60 pt-6 dark:border-slate-800/80">
+
+                                        {/* Dynamic Fallback Render */}
+                                        {isImageBroken ? (
+                                            <div className="h-12 w-12 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-2 border-blue-500/20 text-lg font-bold uppercase select-none">
+                                                {item.patientName ? item.patientName.charAt(0) : <FaUser className="text-sm" />}
+                                            </div>
+                                        ) : (
+                                            <motion.img
+                                                whileHover={{ scale: 1.08 }}
+                                                transition={{ duration: 0.2 }}
+                                                src={item.patientImg}
+                                                alt={`${item.patientName || 'Patient'} profile portrait`}
+                                                className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20 bg-slate-200 dark:bg-slate-800"
+                                                loading="lazy"
+                                                onError={() => handleImageError(uniqueKey)}
+                                            />
+                                        )}
+
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                                {item.patientName || 'Verified Patient'}
+                                            </h3>
+                                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                Patient Community Member
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                )}
 
             </div>
         </section>

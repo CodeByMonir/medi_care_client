@@ -28,11 +28,10 @@ export const deleteReviewData = async (id) => {
     method: 'DELETE'
   })
   const data = await res.json()
-
 }
 
 export const updateReviewData = async (_id, updatedData) => {
-  console.log(_id, updatedData)
+  // console.log(_id, updatedData)
   const res = await fetch(`${baseUrl}/api/reviews?_id=${_id}`, {
     method: "PATCH",
     headers: {

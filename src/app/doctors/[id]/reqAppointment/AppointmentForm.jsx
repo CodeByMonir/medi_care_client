@@ -7,6 +7,9 @@ import { createAppointments } from '@/src/lib/api/appointments';
 import { createPayments } from '@/src/lib/api/payments';
 
 export default function AppointmentForm({ doctor, user, sessionId, validAppointmentDates, resolvedParams }) {
+
+    console.log(user)
+
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [selectedDate, setSelectedDate] = useState('');
@@ -56,6 +59,7 @@ export default function AppointmentForm({ doctor, user, sessionId, validAppointm
                         specialization: doctor?.specialization,
                         patientName: formData.get('patientName'),
                         consultationFee: doctor?.consultationFee,
+                        stripeId: sessionId,
                         createdAt: new Date(),
                     }
 

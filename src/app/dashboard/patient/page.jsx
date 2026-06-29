@@ -8,6 +8,11 @@ import { getUserSession } from '@/src/lib/core/session';
 import React from 'react';
 import UpcomingAppointments from '../../../components/patients/UpcommingAppointments';
 
+export const metadata = {
+    title: "Overview Your Activities",
+    description: "Short activities about you",
+};
+
 const DashboardPage = async () => {
 
     const session = await getUserSession();

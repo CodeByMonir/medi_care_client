@@ -51,6 +51,7 @@ export default async function RequestAppointmentPage({ params, searchParams }) {
     }
 
     const user = await getUserSession();
+    // console.log(user)
     const doctorData = await getDoctorDetails(id);
     const doctor = Array.isArray(doctorData) ? doctorData[0] : doctorData;
 

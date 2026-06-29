@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaClock, FaUser, FaChevronRight } from 'react-icons/fa';
+import { FaClock, FaUser, FaChevronRight, FaUserInjured } from 'react-icons/fa';
 
 export default function UpcomingAppointments({ appointments = [] }) {
     // 1. Get today's system date string format (YYYY-MM-DD)
@@ -28,7 +28,7 @@ export default function UpcomingAppointments({ appointments = [] }) {
             {upcomingList.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 mb-2">
-                        <FaUser className="text-lg" />
+                        <FaUserInjured className="text-lg" />
                     </div>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No scheduled visits</p>
                     <p className="text-xs text-slate-400 mt-0.5">Your schedule is currently clear.</p>
@@ -41,7 +41,7 @@ export default function UpcomingAppointments({ appointments = [] }) {
                             <div className="flex items-center space-x-3.5">
                                 {/* Profile Placeholder Icon */}
                                 <div className="h-10 w-10 shrink-0 rounded-full bg-slate-50 border border-slate-100 dark:bg-slate-800 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300">
-                                    <FaUser className="text-xs" />
+                                    <FaUserInjured className="text-xs" />
                                 </div>
 
                                 <div>
@@ -57,11 +57,11 @@ export default function UpcomingAppointments({ appointments = [] }) {
 
                             <div className="flex items-center space-x-3">
                                 {/* Dynamic Status Pill */}
-                                <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border capitalize ${app.status === 'confirmed'
+                                <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border capitalize ${app.appointmentStatus === 'approved'
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
                                         : 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50'
                                     }`}>
-                                    {app.status || 'Pending'}
+                                    {app.appointmentStatus}
                                 </span>
                                 <FaChevronRight className="text-slate-300 dark:text-slate-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-4px] group-hover:translate-x-0 transform duration-200" />
                             </div>

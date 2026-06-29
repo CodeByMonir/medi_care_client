@@ -14,6 +14,8 @@ export default function GiveReviewPage() {
 
     const { data: session } = useSession();
 
+    const sessionImg = session?.user?.image;
+
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export default function GiveReviewPage() {
                 doctorId: doctorInfo.doctorId,
                 doctorName: doctorInfo.name,
                 patientName: patientName,
+                patientImg: sessionImg,
                 rating,
                 comment,
             };

@@ -9,7 +9,7 @@ const HomePage = async () => {
     const user = await getUserSession();
     const sessionId = user?.id;
     const prescriptionData = await getPrescriptionsData(sessionId);
-    console.log(prescriptionData)
+    // console.log(prescriptionData)
 
 
     return (

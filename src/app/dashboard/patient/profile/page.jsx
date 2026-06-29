@@ -14,14 +14,23 @@ import {
     FaShieldAlt
 } from "react-icons/fa";
 
+export const metadata = {
+    title: "My Profile",
+    description: "User can visit own profile",
+};
+
 const Homepage = async () => {
     const user = await getUserSession();
     const sessionId = user?.id;
 
     const userData = await getUserData(sessionId);
+    const userId = userData?.patientId;
 
-    // If userData does not exist, trigger a clean server-side redirect to verification page
-    if (!userData) {
+    
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    if (userId !== sessionId) {
+        await delay(1000);
         redirect("/dashboard/patient/profile/verify");
     }
 

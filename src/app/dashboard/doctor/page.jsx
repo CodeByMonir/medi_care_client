@@ -34,7 +34,7 @@ const HomePage = async () => {
 
     // 3. Total Reviews Count
     const totalReviewsCount = reviewData.length;
-    console.log(totalReviewsCount)
+    // console.log(totalReviewsCount)
 
     // Bundle metrics configuration dynamically into the layout schema array
     const metricsConfig = [

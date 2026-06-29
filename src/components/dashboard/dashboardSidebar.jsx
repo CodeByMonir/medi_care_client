@@ -46,11 +46,13 @@ export default function DashboardSidebar() {
     ];
 
     // 3. Admin Routes
+
     const adminRoutes = [
         { href: "/dashboard/admin", name: "Overview", icon: <FaThLarge /> },
         { href: "/dashboard/admin/users", name: "Manage Users", icon: <FaUsers /> },
-        { href: "/dashboard/admin/doctors", name: "Verify Doctors", icon: <FaUserMd /> },
-        { href: "/dashboard/admin/settings", name: "System Settings", icon: <FaCogs /> },
+        { href: "/dashboard/admin/doctors", name: "Manage Doctors", icon: <FaUserMd /> },
+        { href: "/dashboard/admin/appointments", name: "Manage Appointments", icon: <FaCalendarCheck /> },
+        { href: "/dashboard/admin/payments", name: "Payment Management", icon: <FaCreditCard /> }
     ];
 
     // Conditional evaluation based on the role prop

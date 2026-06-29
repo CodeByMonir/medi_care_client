@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
     FaUserMd, FaCalendarAlt, FaClock, FaEye,
-    FaHistory, FaTrashAlt, FaTimes, FaSpinner, FaCheckCircle
+    FaHistory, FaTrashAlt, FaTimes, FaSpinner, FaCheckCircle,
+    FaUserInjured
 } from "react-icons/fa";
 import { updateAppointmentData } from "@/src/lib/api/appointments";
 import { FcOk } from "react-icons/fc";
@@ -157,10 +158,10 @@ const AppointmentRequestPage = ({ initialAppointments }) => {
                                         <div className="flex items-start justify-between gap-2 mb-4">
                                             <div className="flex gap-3">
                                                 <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                                                    <FaUserMd className="text-lg" />
+                                                    <FaUserInjured className="text-lg" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">{app.doctorName || app.patientName}</h4>
+                                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">{app.patientName}</h4>
                                                 </div>
                                             </div>
                                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${STATUS_STYLES[statusKey] || STATUS_STYLES.pending}`}>
